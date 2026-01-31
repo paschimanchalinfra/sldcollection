@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SLD Collection Pro</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  
+  <style>
+    :root { --primary: #0F204B; --secondary: #78BE20; --bg: #f4f7f9; --text-dark: #333; --danger: #dc3545; }
+    body { background-color: var(--bg); font-family: 'Inter', sans-serif; color: var(--text-dark); padding-bottom: 70px; }
+    
+    .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay { background: rgba(0,0,0,0.5); z-index: 3000; display: none; }
+    .loader-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.98); z-index: 4000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+    
+    .card-custom { background: white; border-radius: 12px; padding: 20px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 20px; }
+    .section-title { font-size: 0.85rem; text-transform: uppercase; color: var(--primary); font-weight: 700; margin: 0 0 15px; border-bottom: 2px solid #e9ecef; padding-bottom: 8px; }
+    
+    .form-control, .form-select { padding: 10px; border-radius: 8px; border: 1px solid #ced4da; }
+    .form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 0.2rem rgba(15, 32, 75, 0.1); }
+    .input-group-text { border: 1px solid #ced4da; background: #e9ecef; }
+    
+    .btn { border-radius: 8px; font-weight: 600; padding: 10px 16px; }
+    .btn-primary { background-color: var(--primary); border-color: var(--primary); }
+    .btn-primary:hover { background-color: #0a1635; }
+
+    .nav-tabs-custom { border-bottom: none; display: flex; justify-content: space-around; background: white; padding: 10px; border-radius: 0 0 15px 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .nav-link-custom { border: none; background: transparent; color: #6c757d; font-weight: 600; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+    .nav-link-custom.active { background-color: var(--primary); color: white; transform: scale(1.05); }
+
+    /* Specific Styles for Validation & Cable Section */
+    .locked-input { background-color: #e9ecef; color: #6c757d; font-weight: 600; cursor: not-allowed; }
+    .is-invalid-custom { border-color: var(--danger) !important; background-color: #fff8f8; }
+    .validation-msg { color: var(--danger); font-size: 0.75rem; font-weight: 600; margin-top: 4px; display: none; }
+    
+    .cable-table th { background: var(--primary); color: white; font-size: 0.75rem; font-weight: 600; padding: 8px; }
+    .cable-table td { font-size: 0.85rem; padding: 8px; vertical-align: middle; }
+    .warning-box { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; padding: 10px; border-radius: 8px; font-size: 0.8rem; margin-top: 10px; display: flex; align-items: center; gap: 10px; }
+
+    .summary-card { background: white; border-radius: 10px; padding: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; height: 100%; border-left: 5px solid var(--secondary) !important; }
+    .summary-metric { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #6c757d; margin-bottom: 5px; }
+    .summary-val { font-size: 2rem; font-weight: 800; line-height: 1; color: var(--primary); }
+    
+    .div-card { background: white; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #ddd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .div-card.done { border-left-color: var(--secondary); } 
+    .div-card.pending { border-left-color: #ffc107; }
+    .badge-status { background-color: var(--secondary); color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; }
+    
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: 0; } }
+  </style>
+</head>
+<body>
+
+<script>
+  // Replace this with your new Deployment URL
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxg6sjXojOTqrt11WFMGtAXQ-l7rIaDbl6hRrZ1kTlyFi9am_lxNPLm3GNurd2goMa0/exec'; 
+</script>
+
+<div id="loader" class="loader-overlay">
+  <div class="spinner-border text-primary mb-3" role="status"></div>
+  <div class="fw-bold text-muted" id="loaderText">Initializing...</div>
+</div>
+
+<div id="loginScreen" class="overlay fade-in">
+  <div class="card-custom shadow" style="width: 350px;">
+    <div class="text-center mb-4"><h3 class="fw-bold" style="color:var(--primary);">SLD Collection</h3></div>
+    <div class="mb-3"><label class="form-label small fw-bold">Emp Code</label><input type="text" id="loginEmpCode" class="form-control"></div>
+    <div class="mb-3"><label class="form-label small fw-bold">Password</label><div class="input-group"><input type="password" id="loginPass" class="form-control"><button class="btn btn-outline-secondary" type="button" onclick="togglePass('loginPass')"><i class="bi bi-eye"></i></button></div></div>
+    <div class="form-check mb-4"><input class="form-check-input" type="checkbox" id="rememberMe"><label class="form-check-label small text-muted" for="rememberMe">Remember me</label></div>
+    <button class="btn btn-primary w-100" onclick="attemptLogin()">Login</button>
+    <div id="loginMsg" class="text-danger mt-3 text-center small fw-bold"></div>
+  </div>
+</div>
+
+<div id="app" style="display:none;" class="container fade-in">
+  
+  <div class="nav-tabs-custom sticky-top">
+    <button class="nav-link-custom active" onclick="switchTab(this, 'tabForm')"><i class="bi bi-ui-checks"></i> Form</button>
+    <button class="nav-link-custom" onclick="switchTab(this, 'tabDashboard')"><i class="bi bi-speedometer2"></i> Status</button>
+    <button class="nav-link-custom text-danger" onclick="logout()"><i class="bi bi-box-arrow-right"></i></button>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mb-3 px-2">
+    <small class="text-muted ms-2">User: <span id="displayUserName" class="fw-bold text-dark"></span></small>
+    <button class="btn btn-sm btn-outline-secondary" style="font-size:0.75rem;" onclick="openChangePass()">Change Password</button>
+  </div>
+
+  <div id="tabForm" class="tab-content">
+    <form id="mainForm">
+      <input type="hidden" id="activeEmpCode"><input type="hidden" id="uploaderName" name="uploaderName">
+      
+      <div class="card-custom">
+        <h6 class="section-title">📍 Location Details</h6>
+        <div class="row g-3">
+          <div class="col-6"><label class="form-label small">Zone</label><select name="zone" id="sel-zone" class="form-select form-select-sm" onchange="filterHierarchy('zone')"></select></div>
+          <div class="col-6"><label class="form-label small">Circle</label><select name="circle" id="sel-circle" class="form-select form-select-sm" onchange="filterHierarchy('circle')"></select></div>
+          <div class="col-6"><label class="form-label small">Division</label><select name="division" id="sel-div" class="form-select form-select-sm" onchange="filterHierarchy('div')"></select></div>
+          <div class="col-6"><label class="form-label small">Sub Div</label><select name="subdiv" id="sel-subdiv" class="form-select form-select-sm" onchange="filterHierarchy('subdiv')"></select></div>
+          <div class="col-6"><label class="form-label small">Substation</label><select name="substation" id="sel-substn" class="form-select form-select-sm" onchange="filterHierarchy('substn')"></select></div>
+          <div class="col-12"><label class="form-label small text-primary fw-bold">Feeder</label><select name="feeder" id="sel-feeder" class="form-select"></select></div>
+        </div>
+      </div>
+
+      <div class="card-custom">
+        <h6 class="section-title">⚡ DT Capacity Breakup</h6>
+        <div class="row g-2" id="kvaInputs">
+            <div class="col-3">
+                <div class="bg-warning-subtle p-1 rounded border border-warning text-center h-100">
+                    <label class="small fw-bold text-danger d-block">PTW</label>
+                    <input type="number" class="form-control form-control-sm text-center p-1" id="cap_ptw" name="cap_ptw" value="0" min="0" oninput="runMath()">
+                </div>
+            </div>
+            <script>
+                [10,16,25,63,100,160,250,315,400,630,750,800,1000,1200,1500,2000].forEach(k => {
+                    document.write(`
+                    <div class="col-3">
+                        <label class="small d-block text-center text-muted" style="font-size:0.7rem;">${k} KVA</label>
+                        <input type="number" class="form-control form-control-sm kva-in kva-valid text-center p-1" name="cap_${k}" value="0" min="0" oninput="runMath()">
+                    </div>`);
+                });
+            </script>
+        </div>
+      </div>
+
+      <div class="card-custom">
+        <h6 class="section-title">📊 Scope & Status</h6>
+        <div class="row g-3">
+          <div class="col-6 col-md-4">
+              <label class="form-label small text-muted">Total Scope</label>
+              <input type="number" class="form-control locked-input" id="out-totalScope" value="0" readonly>
+          </div>
+          <div class="col-6 col-md-4">
+              <label class="form-label small text-primary fw-bold">Installed <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="totalInstalled" id="in-installed" placeholder="0" min="0" oninput="runMath()">
+          </div>
+          <div class="col-6 col-md-4">
+              <label class="form-label small text-primary fw-bold">Cable Req <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="cableReq" id="in-cableReq" placeholder="0" min="0" oninput="runMath()">
+              <div class="validation-msg" id="msg-cableReq">Exceeds Available Scope</div>
+          </div>
+
+          <div class="col-12"><hr class="my-1"></div>
+
+          <div class="col-6 col-md-4">
+              <label class="form-label small text-success fw-bold">Balance Scope</label>
+              <input type="number" class="form-control locked-input" id="out-balance" value="0" readonly>
+              <small class="text-muted" style="font-size:0.65rem;">(Total - Inst - Cable)</small>
+          </div>
+           
+           <div class="col-6 col-md-4">
+              <label class="form-label small text-primary fw-bold">Without Cable <span class="text-danger">*</span></label>
+              <input type="number" class="form-control" name="withoutCable" id="in-withoutCable" placeholder="0" min="0" oninput="runMath()">
+              <div class="validation-msg" id="msg-withoutCable">Exceeds Balance Scope</div>
+          </div>
+          
+          <div class="col-6 col-md-4">
+             <label class="form-label small text-muted">Total DT Sum</label>
+             <input type="number" class="form-control locked-input" id="out-dtSum" value="0" readonly>
+          </div>
+          
+           <input type="hidden" id="out-notInScope" name="notInScope" value="0">
+        </div>
+      </div>
+
+      <div class="card-custom" id="cableDetailsSection" style="display:none;">
+        <h6 class="section-title">🔌 DT Cable Requirement Details</h6>
+        
+        <div class="table-responsive">
+            <table class="table table-bordered cable-table mb-2">
+                <thead>
+                    <tr>
+                        <th style="width:25%">DT Capacity</th>
+                        <th style="width:15%">Total DTs</th>
+                        <th style="width:25%">Cable Size</th>
+                        <th style="width:20%">Total Len (M)</th>
+                        <th style="width:15%">Avg Len</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text" class="form-control form-control-sm locked-input p-1" value="Mixed/Fixed" readonly></td>
+                        <td><input type="number" class="form-control form-control-sm locked-input p-1 text-center" id="cd-count" readonly></td>
+                        <td><input type="text" class="form-control form-control-sm locked-input p-1" value="As per DT" readonly></td>
+                        <td><input type="number" class="form-control form-control-sm p-1 text-center border-primary" id="cd-length" placeholder="Enter" oninput="validateCableLength()"></td>
+                        <td><input type="number" class="form-control form-control-sm locked-input p-1 text-center" id="cd-avg" readonly></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <small class="text-muted">Max Limit: <span id="cd-maxLimit" class="fw-bold">0</span> Mtr (34m/DT)</small>
+            <div id="cd-warning" class="text-danger fw-bold small fade-in" style="display:none;">
+                <i class="bi bi-exclamation-triangle-fill"></i> Limit Exceeded!
+            </div>
+        </div>
+      </div>
+
+      <div class="card-custom">
+        <h6 class="section-title">📷 Proof Documents</h6>
+        <div class="row g-3">
+          <div class="col-12 col-md-6"><label class="form-label small">Sign-off Copy <span class="text-danger">*</span></label><input type="file" class="form-control form-control-sm" accept="image/*" onchange="handleImage(this, 'signoffBase64')" required></div>
+          <div class="col-12 col-md-6"><label class="form-label small">SLD Drawing <span class="text-danger">*</span></label><input type="file" class="form-control form-control-sm" accept="image/*" onchange="handleImage(this, 'sldBase64')" required></div>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-primary w-100 shadow-sm mb-5" onclick="submitForm()">Submit Data</button>
+    </form>
+  </div>
+
+  <div id="tabDashboard" class="tab-content" style="display:none;">
+    <div class="d-flex justify-content-center mb-3 btn-group">
+        <button class="btn btn-outline-primary btn-sm active" id="btnShowProj" onclick="toggleDashView('proj')">Project Overview</button>
+        <button class="btn btn-outline-primary btn-sm" id="btnShowUser" onclick="toggleDashView('user')">User Reports</button>
+    </div>
+
+    <div id="viewProjectStatus">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h5 class="fw-bold m-0" style="color:var(--primary);">Project Overview</h5>
+          <select id="dashZoneFilter" class="form-select form-select-sm w-50" onchange="applyDashFilter()"><option value="ALL">All Zones</option></select>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-6"><div class="summary-card"><div class="summary-metric">Total Feeders</div><div class="summary-val" id="sum-total">0</div></div></div>
+            <div class="col-6"><div class="summary-card" style="border-left-color:#ffc107 !important;"><div class="summary-metric">Pending Uploads</div><div class="summary-val" style="color:#ffc107;" id="sum-pending">0</div></div></div>
+        </div>
+        <div id="divisionList"></div>
+    </div>
+
+    <div id="viewUserReports" style="display:none;">
+        <div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+            <h5 class="fw-bold m-0" style="color:var(--primary);">Performance</h5>
+            <div class="d-flex gap-2">
+                <select id="reportScopeFilter" class="form-select form-select-sm" style="width:120px;" onchange="updateReportTables()">
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="card-custom mb-4 p-0" style="overflow:hidden;">
+            <div class="p-3 bg-light border-bottom fw-bold small text-uppercase" style="color:var(--primary);" id="lblProgressTitle">TODAY'S PROGRESS</div>
+            <table class="table table-striped mb-0 table-sm small">
+                <thead class="table-light text-center"><tr><th>Zone</th><th>Employee Name</th><th>SLD Submitted</th></tr></thead>
+                <tbody id="tblProgressBody" class="text-center"></tbody>
+                <tfoot class="table-dark text-center"><tr><td colspan="2">Grand Total</td><td id="lblProgressTotal">0</td></tr></tfoot>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-bold text-secondary m-0">FTM Progress</h6>
+            <div class="d-flex gap-1">
+                <select id="ftmMonth" class="form-select form-select-sm" style="width:auto;" onchange="updateReportTables()">
+                    <option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option><option value="3">Apr</option>
+                    <option value="4">May</option><option value="5">Jun</option><option value="6">Jul</option><option value="7">Aug</option>
+                    <option value="8">Sep</option><option value="9">Oct</option><option value="10">Nov</option><option value="11">Dec</option>
+                </select>
+                <select id="ftmYear" class="form-select form-select-sm" style="width:auto;" onchange="updateReportTables()">
+                    <option value="2025">2025</option><option value="2026">2026</option><option value="2027">2027</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="report-container">
+            <table class="report-table" id="tblDayWise"></table>
+        </div>
+        
+        <h6 class="fw-bold text-secondary mb-2 mt-4">Monthly Summary</h6>
+        <div class="report-container">
+            <table class="report-table" id="tblMonthSummary"></table>
+        </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="changePassModal" class="overlay modal-overlay">
+  <div class="card-custom shadow" style="width: 300px;">
+    <h6>Update Password</h6>
+    <input type="password" id="cpOldPass" class="form-control mb-2" placeholder="Current">
+    <input type="password" id="cpNewPass" class="form-control mb-3" placeholder="New">
+    <button class="btn btn-success w-100 mb-1" onclick="submitChangePass()">Save</button>
+    <button class="btn btn-light w-100" onclick="document.getElementById('changePassModal').style.display='none'">Close</button>
+  </div>
+</div>
+
+<script>
+  // STATE
+  let masterData = [], completedFeeders = [], dashboardStats = {}, rawReportData = [], payload = { signoffBase64: null, sldBase64: null };
+  const QUEUE_KEY = 'sld_submission_queue';
+  let isSyncing = false;
+
+  // INIT
+  window.onload = function() {
+    const d = new Date();
+    // Safely set dropdowns if they exist (dashboard might be hidden)
+    const m = document.getElementById('ftmMonth'); if(m) m.value = d.getMonth();
+    const y = document.getElementById('ftmYear'); if(y) y.value = d.getFullYear();
+
+    const saved = localStorage.getItem('sld_creds');
+    if(saved) {
+      const c = JSON.parse(saved);
+      document.getElementById('loginEmpCode').value = c.code;
+      document.getElementById('loginPass').value = c.pass;
+      document.getElementById('rememberMe').checked = true;
+      attemptLogin();
+    } else {
+        document.getElementById('loader').style.display = 'none';
+    }
+  };
+
+  // --- API CALLER (Using POST for everything) ---
+  async function callBackend(action, data = {}) {
+      // For 'getData', we still use POST as per requirements
+      const response = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action, ...data }),
+          headers: { 'Content-Type': 'text/plain' }
+      });
+      return await response.json();
+  }
+
+  // --- AUTH ---
+  function attemptLogin() {
+    const empCode = document.getElementById('loginEmpCode').value;
+    const password = document.getElementById('loginPass').value;
+    const rem = document.getElementById('rememberMe').checked;
+
+    document.getElementById('loader').style.display = 'flex';
+    document.getElementById('loaderText').innerText = "Authenticating...";
+
+    callBackend('login', { empCode, password }).then(res => {
+        if(res.success) {
+            if(rem) localStorage.setItem('sld_creds', JSON.stringify({code: empCode, pass: password}));
+            else localStorage.removeItem('sld_creds');
+            
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            document.getElementById('displayUserName').innerText = res.name;
+            document.getElementById('uploaderName').value = res.name;
+            document.getElementById('activeEmpCode').value = empCode;
+            initAppData();
+        } else {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('loginMsg').innerText = res.message;
+        }
+    }).catch(err => {
+        document.getElementById('loader').style.display = 'none';
+        alert("Network Error: " + err);
+    });
+  }
+
+  function logout() {
+      localStorage.removeItem('sld_creds');
+      location.reload();
+  }
+
+  function initAppData() {
+      document.getElementById('loaderText').innerText = "Loading Data...";
+      // Process Queue if any
+      const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+      if(queue.length > 0) processQueue();
+
+      callBackend('getData').then(data => {
+          document.getElementById('loader').style.display = 'none';
+          
+          masterData = data.hierarchy || [];
+          completedFeeders = data.completedFeeders || [];
+          dashboardStats = data.divisionStats || {};
+          rawReportData = data.reportData || [];
+
+          // Populate Zone Dropdown
+          const zones = [...new Set(masterData.map(r => r[0]))].sort();
+          const zs = document.getElementById('sel-zone');
+          const dz = document.getElementById('dashZoneFilter');
+          
+          zs.innerHTML = '<option value="">Select...</option>';
+          dz.innerHTML = '<option value="ALL">All Zones</option>';
+          
+          zones.forEach(z => {
+              zs.innerHTML += `<option value="${z}">${z}</option>`;
+              dz.innerHTML += `<option value="${z}">${z}</option>`;
+          });
+
+          renderDashboard(); updateReportTables();
+      });
+  }
+
+  // --- LOGIC: SCOPE & CABLE ---
+  function runMath() {
+    // 1. Calculate Total Scope
+    let sumScope = 0;
+    document.querySelectorAll('.kva-in').forEach(el => sumScope += Number(el.value || 0));
+    const ptw = Number(document.getElementById('cap_ptw').value || 0);
+    
+    // Update visuals
+    document.getElementById('out-totalScope').value = sumScope;
+    document.getElementById('out-notInScope').value = ptw;
+    document.getElementById('out-dtSum').value = sumScope + ptw;
+
+    // 2. Fetch Inputs
+    const installed = Number(document.getElementById('in-installed').value || 0);
+    let cableReq = Number(document.getElementById('in-cableReq').value || 0);
+    const withoutCableInput = document.getElementById('in-withoutCable');
+    let withoutCable = Number(withoutCableInput.value || 0);
+
+    // 3. Validation Logic
+    // Available for assignment = Total - Installed
+    const available = Math.max(0, sumScope - installed);
+    
+    // Strict Limit: Cable Req cannot exceed Available
+    const cableInputEl = document.getElementById('in-cableReq');
+    if (cableReq > available) {
+        cableInputEl.classList.add('is-invalid-custom');
+        document.getElementById('msg-cableReq').style.display = 'block';
+    } else {
+        cableInputEl.classList.remove('is-invalid-custom');
+        document.getElementById('msg-cableReq').style.display = 'none';
+    }
+
+    // Balance Scope Calculation (Defined as Total - Inst - CableReq)
+    const balance = available - cableReq;
+    document.getElementById('out-balance').value = balance;
+
+    // Strict Limit: Without Cable cannot exceed Balance
+    if (withoutCable > balance) {
+        withoutCableInput.classList.add('is-invalid-custom');
+        document.getElementById('msg-withoutCable').style.display = 'block';
+    } else {
+        withoutCableInput.classList.remove('is-invalid-custom');
+        document.getElementById('msg-withoutCable').style.display = 'none';
+    }
+
+    // 4. Update Cable Details Section Visibility
+    const detailSec = document.getElementById('cableDetailsSection');
+    if (cableReq > 0) {
+        detailSec.style.display = 'block';
+        document.getElementById('cd-count').value = cableReq; // Locked count
+        document.getElementById('cd-maxLimit').innerText = cableReq * 34; // Max Length
+        validateCableLength(); // Re-validate if count changes
+    } else {
+        detailSec.style.display = 'none';
+        document.getElementById('cd-length').value = '';
+    }
+  }
+
+  function validateCableLength() {
+      const count = Number(document.getElementById('cd-count').value || 0);
+      const lenInput = document.getElementById('cd-length');
+      const val = Number(lenInput.value || 0);
+      const limit = count * 34;
+      const warning = document.getElementById('cd-warning');
+
+      // Calculate Average
+      const avg = count > 0 ? (val / count).toFixed(1) : 0;
+      document.getElementById('cd-avg').value = avg;
+
+      if (val > limit) {
+          lenInput.classList.add('is-invalid-custom');
+          warning.style.display = 'block';
+      } else {
+          lenInput.classList.remove('is-invalid-custom');
+          warning.style.display = 'none';
+      }
+  }
+
+  // --- SUBMISSION ---
+  function submitForm() {
+      // Validate Cable Length strictness before submitting
+      const cableReq = Number(document.getElementById('in-cableReq').value || 0);
+      let cableLength = 0;
+
+      if (cableReq > 0) {
+          const len = Number(document.getElementById('cd-length').value || 0);
+          const max = cableReq * 34;
+          if (len > max) return alert("Error: Cable Length exceeds allowable limit (34m/DT).");
+          if (len <= 0) return alert("Error: Please enter Cable Length.");
+          cableLength = len;
+      }
+
+      // Check General Constraints
+      const balance = Number(document.getElementById('out-balance').value);
+      const woCable = Number(document.getElementById('in-withoutCable').value);
+      if(woCable > balance) return alert("Error: 'Without Cable' exceeds Balance Scope.");
+
+      const form = document.getElementById('mainForm');
+      if(!payload.signoffBase64 || !payload.sldBase64) return alert("Upload both images.");
+      
+      const data = {
+        uploaderName: document.getElementById('uploaderName').value,
+        uploaderEmpCode: document.getElementById('activeEmpCode').value,
+        zone: form.zone.value, circle: form.circle.value, division: form.division.value,
+        subdiv: form.subdiv.value, substation: form.substation.value, feeder: form.feeder.value,
+        totalScope: document.getElementById('out-totalScope').value,
+        totalInstalled: document.getElementById('in-installed').value,
+        notInScope: document.getElementById('out-notInScope').value,
+        cableReq: cableReq, withoutCable: woCable,
+        cableLength: cableLength, // New field
+        cap_ptw: document.getElementById('cap_ptw').value,
+        signoffBase64: payload.signoffBase64, sldBase64: payload.sldBase64
+      };
+
+      // Add KVAs
+      [10,16,25,63,100,160,250,315,400,630,750,800,1000,1200,1500,2000].forEach(k => {
+          data[`cap_${k}`] = form.elements[`cap_${k}`].value;
+      });
+
+      // Queue and Send
+      enqueueSubmission(data);
+      alert("Submission Queued! Syncing...");
+      form.reset();
+      payload = {};
+      runMath(); // Reset visuals
+  }
+
+  // --- QUEUE SYSTEM ---
+  function enqueueSubmission(data) {
+      const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+      queue.push(data);
+      localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+      processQueue();
+  }
+
+  function processQueue() {
+      if(isSyncing) return;
+      const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+      if(queue.length === 0) { document.getElementById('loader').style.display='none'; return; }
+
+      isSyncing = true;
+      document.getElementById('loader').style.display='flex';
+      document.getElementById('loaderText').innerText = `Syncing ${queue.length} items...`;
+
+      const item = queue[0];
+      callBackend('submitForm', { data: item }).then(res => {
+          if(res.success) {
+              const q = JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+              q.shift();
+              localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+              isSyncing = false;
+              processQueue();
+          } else {
+              console.error(res.message);
+              isSyncing = false;
+              setTimeout(processQueue, 5000);
+          }
+      }).catch(err => {
+          isSyncing = false;
+          setTimeout(processQueue, 10000);
+      });
+  }
+
+  // --- UTILS ---
+  function handleImage(input, key) {
+    if(input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = e => payload[key] = e.target.result;
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  function switchTab(el, id) {
+    document.querySelectorAll('.tab-content').forEach(e=>e.style.display='none');
+    document.getElementById(id).style.display='block';
+    document.querySelectorAll('.nav-link-custom').forEach(e=>e.classList.remove('active'));
+    el.classList.add('active');
+  }
+  
+  // Hierarchy Filters & Dropdowns
+  function populateSelect(id, idx, filters) {
+    const sel = document.getElementById(id); sel.innerHTML = '<option value="">Select...</option>';
+    const filtered = masterData.filter(r => filters.every((v, i) => v === null || r[i] === v));
+    const unique = [...new Set(filtered.map(r => r[idx]))].sort();
+    unique.forEach(val => {
+      let opt = document.createElement('option'); opt.value = val;
+      if(idx === 5 && completedFeeders.includes(val)) { 
+          opt.innerText = val + " (✅ Done)"; opt.disabled = true; opt.style.color="green"; 
+      } else {
+          opt.innerText = val;
+      }
+      sel.appendChild(opt);
+    });
+  }
+
+  function filterHierarchy(level) {
+    const zone = document.getElementById('sel-zone').value || null;
+    const circle = document.getElementById('sel-circle').value || null;
+    const div = document.getElementById('sel-div').value || null;
+    const subdiv = document.getElementById('sel-subdiv').value || null;
+    const substn = document.getElementById('sel-substn').value || null;
+    if(level === 'zone') { populateSelect('sel-circle', 1, [zone]); }
+    if(level === 'circle') { populateSelect('sel-div', 2, [zone, circle]); }
+    if(level === 'div') { populateSelect('sel-subdiv', 3, [zone, circle, div]); }
+    if(level === 'subdiv') { populateSelect('sel-substn', 4, [zone, circle, div, subdiv]); }
+    if(level === 'substn') { populateSelect('sel-feeder', 5, [zone, circle, div, subdiv, substn]); }
+  }
+
+  // --- DASHBOARD LOGIC (Similar to prev version) ---
+  function updateReportTables() {
+    const scope = document.getElementById('reportScopeFilter').value;
+    const title = document.getElementById('lblProgressTitle');
+    title.innerText = (scope === 'today' ? "TODAY'S" : "THIS WEEK'S") + " PROGRESS";
+
+    const now = new Date();
+    const fYear = now.getFullYear(), fMonth = now.getMonth(), fDate = now.getDate();
+    
+    const filteredData = rawReportData.filter(d => {
+        const itemDate = new Date(d.date);
+        if(scope === 'today') return itemDate.getFullYear() === fYear && itemDate.getMonth() === fMonth && itemDate.getDate() === fDate;
+        if(scope === 'week') return getWeekNumber(itemDate) === getWeekNumber(now) && itemDate.getFullYear() === fYear;
+        return false;
+    });
+
+    const tbody = document.getElementById('tblProgressBody');
+    tbody.innerHTML = '';
+    
+    if(filteredData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted p-2">No data found.</td></tr>';
+        document.getElementById('lblProgressTotal').innerText = 0;
+    } else {
+        const agg = {};
+        filteredData.forEach(i => {
+            const key = i.zone + '|' + i.user;
+            if(!agg[key]) agg[key] = {zone: i.zone, user: i.user, count: 0};
+            agg[key].count++;
+        });
+        const sorted = Object.values(agg).sort((a,b) => a.zone.localeCompare(b.zone) || a.user.localeCompare(b.user));
+        let total = 0;
+        sorted.forEach(row => {
+            total += row.count;
+            tbody.innerHTML += `<tr><td>${row.zone}</td><td>${row.user}</td><td class="fw-bold">${row.count}</td></tr>`;
+        });
+        document.getElementById('lblProgressTotal').innerText = total;
+    }
+
+    renderDailyTable();
+    renderMonthlyTable();
+  }
+
+  function renderDailyTable() {
+      const tbl = document.getElementById('tblDayWise');
+      const selMonth = Number(document.getElementById('ftmMonth').value);
+      const selYear = Number(document.getElementById('ftmYear').value);
+      
+      const daysInMonth = new Date(selYear, selMonth+1, 0).getDate();
+      const zones = [...new Set(rawReportData.map(d=>d.zone))].sort();
+
+      let head = `<thead><tr><th class="header-dark">Zone</th><th class="header-dark">Total</th>`;
+      for(let i=1; i<=daysInMonth; i++) head += `<th>${i}</th>`;
+      head += `</tr></thead><tbody>`;
+
+      let grandTotal = 0;
+      let dayTotals = new Array(daysInMonth + 1).fill(0);
+
+      zones.forEach(z => {
+          let zTotal = 0;
+          let row = `<tr><td class="fw-bold text-start">${z}</td>`;
+          let dCells = '';
+
+          for(let i=1; i<=daysInMonth; i++) {
+              const count = rawReportData.filter(d => {
+                  const date = new Date(d.date);
+                  return d.zone === z && date.getDate() === i && date.getMonth() === selMonth && date.getFullYear() === selYear;
+              }).length;
+              dCells += `<td>${count || 0}</td>`;
+              zTotal += count;
+              dayTotals[i] += count;
+          }
+          row += `<td class="fw-bold" style="background:#e0e0e0">${zTotal}</td>${dCells}</tr>`;
+          head += row;
+          grandTotal += zTotal;
+      });
+
+      let foot = `<tr class="row-total"><td>Total</td><td>${grandTotal}</td>`;
+      for(let i=1; i<=daysInMonth; i++) foot += `<td>${dayTotals[i]}</td>`;
+      foot += `</tr></tbody>`;
+      tbl.innerHTML = head + foot;
+  }
+
+  function renderMonthlyTable() {
+      const tbl = document.getElementById('tblMonthSummary');
+      const selYear = Number(document.getElementById('ftmYear').value);
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const zones = [...new Set(rawReportData.map(d=>d.zone))].sort();
+      
+      let head = `<thead><tr><th class="header-dark">Zone</th><th class="header-dark">Cumulative</th>`;
+      months.forEach(m => head += `<th>${m}</th>`);
+      head += `</tr></thead><tbody>`;
+
+      let grandTotal = 0;
+      let monthTotals = new Array(12).fill(0);
+
+      zones.forEach(z => {
+          let zTotal = 0;
+          let row = `<tr><td class="fw-bold text-start">${z}</td>`;
+          let mCells = '';
+          
+          months.forEach((m, i) => {
+              const count = rawReportData.filter(d => d.zone === z && new Date(d.date).getMonth() === i && new Date(d.date).getFullYear() === selYear).length;
+              mCells += `<td>${count || 0}</td>`;
+              zTotal += count;
+              monthTotals[i] += count;
+          });
+          
+          row += `<td class="fw-bold" style="background:#e0e0e0">${zTotal}</td>${mCells}</tr>`;
+          head += row;
+          grandTotal += zTotal;
+      });
+
+      let foot = `<tr class="row-total"><td>Total</td><td>${grandTotal}</td>`;
+      monthTotals.forEach(t => foot += `<td>${t}</td>`);
+      foot += `</tr></tbody>`;
+      tbl.innerHTML = head + foot;
+  }
+
+  function getWeekNumber(d) {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+  }
+
+  function toggleDashView(view) {
+    const p = document.getElementById('viewProjectStatus');
+    const u = document.getElementById('viewUserReports');
+    const b1 = document.getElementById('btnShowProj');
+    const b2 = document.getElementById('btnShowUser');
+    if(view === 'proj') { p.style.display='block'; u.style.display='none'; b1.classList.add('active'); b2.classList.remove('active'); }
+    else { p.style.display='none'; u.style.display='block'; b1.classList.remove('active'); b2.classList.add('active'); updateReportTables(); }
+  }
+
+  function applyDashFilter() { renderDashboard(); }
+  function renderDashboard() {
+    const selectedZone = document.getElementById('dashZoneFilter').value;
+    const container = document.getElementById('divisionList');
+    container.innerHTML = '';
+    
+    if(!masterData || masterData.length === 0) {
+       container.innerHTML = '<div class="text-center text-muted mt-5">No hierarchy data available.</div>';
+       return;
+    }
+
+    const divToZone = {};
+    masterData.forEach(r => divToZone[r[2]] = r[0]);
+
+    const stats = dashboardStats;
+    const divKeys = Object.keys(stats).sort();
+    let grandTotal = 0; let grandCompleted = 0; let visibleCount = 0;
+
+    divKeys.forEach(div => {
+      const zone = divToZone[div];
+      if(selectedZone !== 'ALL' && zone !== selectedZone) return;
+
+      visibleCount++;
+      const s = stats[div];
+      grandTotal += s.total; grandCompleted += s.completed;
+      const isDone = s.completed >= s.total;
+      const pct = Math.round((s.completed / s.total) * 100) || 0;
+      const html = `<div class="div-card ${isDone ? 'done' : 'pending'} fade-in"><div><div class="fw-bold">${div}</div><div class="small text-muted">${s.completed} / ${s.total} Uploaded</div></div><div class="text-end"><span class="badge-status">${isDone ? 'COMPLETED' : 'PENDING'}</span><div class="small fw-bold mt-1 text-muted">${pct}%</div></div></div>`;
+      container.innerHTML += html;
+    });
+    document.getElementById('sum-total').innerText = grandTotal;
+    document.getElementById('sum-pending').innerText = Math.max(0, grandTotal - grandCompleted);
+    if(visibleCount === 0) container.innerHTML = '<div class="text-center text-muted mt-5">No divisions found.</div>';
+  }
+
+  function openChangePass() { document.getElementById('changePassModal').style.display = 'flex'; }
+  function submitChangePass() {
+      const c = document.getElementById('activeEmpCode').value;
+      const o = document.getElementById('cpOldPass').value;
+      const n = document.getElementById('cpNewPass').value;
+      if(!o || !n) return alert("Enter passwords");
+      callBackend('changePassword', { empCode: c, oldPass: o, newPass: n }).then(res => {
+          alert(res.message); 
+          if(res.success) document.getElementById('changePassModal').style.display='none'; 
+      });
+  }
+  function togglePass(id) { document.getElementById(id).type = (document.getElementById(id).type === "password") ? "text" : "password"; }
+</script>
+</body>
+</html>
