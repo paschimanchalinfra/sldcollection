@@ -30,8 +30,16 @@
     .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
     
     .nav-tabs-custom { position: fixed; bottom: 0; left: 0; width: 100%; background: white; z-index: 1000; display: flex; justify-content: space-around; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-    .nav-link-custom { border: none; background: transparent; color: #6c757d; font-weight: 600; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+    .nav-link-custom { border: none; background: transparent; color: #6c757d; font-weight: 600; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: 0.2s; }
     .nav-link-custom.active { background-color: var(--primary); color: white; }
+
+    /* --- NEW STATUS STYLES --- */
+    .stat-card { background: white; border-radius: 10px; padding: 15px; border-left: 5px solid var(--primary); margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    .badge-zone { font-size: 0.7rem; background: #e3f2fd; color: var(--primary); padding: 4px 8px; border-radius: 4px; }
+    .accordion-button:not(.collapsed) { background-color: rgba(15, 32, 75, 0.05); color: var(--primary); }
+    .drill-table td { padding: 8px 4px; font-size: 0.8rem; }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   </style>
 </head>
 <body>
@@ -54,7 +62,7 @@
 <div id="app" style="display:none;" class="container pt-3">
   
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <small class="text-muted">User: <span id="displayUserName" class="fw-bold text-dark"></span></small>
+    <small class="text-muted">User: <span id="displayUserName" class="fw-bold text-dark" data-role="user"></span></small>
     <button class="btn btn-sm btn-outline-danger" onclick="logout()">Logout</button>
   </div>
 
@@ -83,7 +91,7 @@
                     <input type="number" class="form-control text-center p-1 kva-scope-in" name="cap_ptw" id="cap_ptw" value="0" min="0" oninput="calculateScope()">
                 </div>
             </div>
-            </div>
+        </div>
       </div>
 
       <div class="card-custom">
@@ -140,14 +148,14 @@
                     <tbody id="cableTableBody">
                         </tbody>
                     <tfoot class="table-light fw-bold">
-                         <tr>
+                          <tr>
                              <td>TOTAL</td>
                              <td id="tbl-sum-count">0</td>
                              <td>-</td>
                              <td>-</td>
                              <td id="tbl-sum-len">0</td>
                              <td>-</td>
-                         </tr>
+                          </tr>
                     </tfoot>
                 </table>
             </div>
@@ -170,11 +178,46 @@
     </form>
   </div>
   
+  <div id="tabStatus" style="display:none;" class="fade-in pb-5">
+    
+    <div class="d-flex justify-content-center mb-3">
+      <div class="btn-group shadow-sm" role="group">
+        <input type="radio" class="btn-check" name="statView" id="vPendency" autocomplete="off" checked onchange="toggleStatView('pendency')">
+        <label class="btn btn-outline-primary btn-sm" for="vPendency">Site Pendency</label>
+
+        <input type="radio" class="btn-check" name="statView" id="vUser" autocomplete="off" onchange="toggleStatView('user')">
+        <label class="btn btn-outline-primary btn-sm" for="vUser">User Progress</label>
+      </div>
+    </div>
+
+    <div id="viewPendency">
+      <div class="d-flex justify-content-between align-items-center mb-2 px-2">
+        <h6 class="text-muted fw-bold m-0">Zone Wise Status</h6>
+        <small class="text-muted" style="font-size:0.7rem">Updated: <span id="lastUpdateStats">-</span></small>
+      </div>
+      <div id="pendencyContainer">
+         </div>
+    </div>
+
+    <div id="viewUser" style="display:none;">
+       <div class="alert alert-info py-2 small mb-3"><i class="bi bi-info-circle"></i> Showing submission stats.</div>
+       <div id="userStatsContainer">
+         </div>
+    </div>
+    
+  </div>
+
   <div class="nav-tabs-custom">
-    <button class="nav-link-custom active"><i class="bi bi-ui-checks"></i> Form</button>
+    <button class="nav-link-custom active" id="btnNavForm" onclick="switchTab('form')">
+      <i class="bi bi-ui-checks"></i> Form
+    </button>
+    <button class="nav-link-custom" id="btnNavStatus" onclick="switchTab('status')">
+      <i class="bi bi-graph-up-arrow"></i> Status
+    </button>
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
   // =============== CONFIG ===============
   const API_URL = 'https://script.google.com/macros/s/AKfycbwCL0qhkMW9EZvDPCWjKcp1mjKr9Y0BmCNAemItqf6ei4-ap-lV2TNsJiIP1082eT0n/exec'; 
@@ -187,6 +230,7 @@
   
   const KVA_LIST = [10,16,25,63,100,160,250,315,400,630,750,800,1000,1200,1500,2000];
   let masterData = [], completedFeeders = [], payload = { signoffBase64: null, sldBase64: null };
+  let statusLoaded = false;
 
   window.onload = function() {
     renderKvaInputs();
@@ -340,11 +384,10 @@
         return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`);
     }
 
-    // 1. GENERATE SCOPE JSON (FIX FOR EMPTY DATA)
+    // 1. GENERATE SCOPE JSON
     const scopeArray = [];
     document.querySelectorAll('.kva-scope-in').forEach(input => {
         const val = Number(input.value || 0);
-        // Include if val > 0, or change condition to true to include all zeros
         if (val > 0) {
             const kvaName = input.name.replace('cap_', '');
             scopeArray.push({ k: kvaName, v: val });
@@ -363,16 +406,15 @@
             const totalLen = Number(lenInput.value || 0);
             
             cableDetailsArray.push({
-                k: kva,             
-                c: count,           
-                s: CABLE_MAP[kva],  
-                l: totalLen         
+                k: kva,              
+                c: count,            
+                s: CABLE_MAP[kva],   
+                l: totalLen          
             });
             cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`);
         }
     });
 
-    // Explicitly stringify empty arrays if needed
     const finalScopeJSON = scopeArray.length > 0 ? JSON.stringify(scopeArray) : "[]";
     const finalCableJSON = cableDetailsArray.length > 0 ? JSON.stringify(cableDetailsArray) : "[]";
     const finalSummary = cableSummaryArray.length > 0 ? cableSummaryArray.join(" | ") : "None";
@@ -393,7 +435,7 @@
         ptwCount: document.getElementById('cap_ptw').value,
         
         // PAYLOAD
-        scopeJSON: finalScopeJSON,      
+        scopeJSON: finalScopeJSON,       
         cableSummary: finalSummary, 
         cableJSON: finalCableJSON,   
         
@@ -434,7 +476,11 @@
         localStorage.setItem('sld_creds', JSON.stringify({code, pass}));
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
-        document.getElementById('displayUserName').innerText = res.data.name;
+        
+        const nameDisplay = document.getElementById('displayUserName');
+        nameDisplay.innerText = res.data.name;
+        nameDisplay.setAttribute('data-role', res.data.role || 'user'); // Save Role
+        
         document.getElementById('uploaderName').value = res.data.name;
         document.getElementById('activeEmpCode').value = code;
         loadAppData();
@@ -456,6 +502,148 @@
     }
   }
 
+  // --- NEW STATUS FUNCTIONS ---
+  function switchTab(tab) {
+    document.querySelectorAll('.nav-link-custom').forEach(b => b.classList.remove('active'));
+    
+    if (tab === 'form') {
+      document.getElementById('tabForm').style.display = 'block';
+      document.getElementById('tabStatus').style.display = 'none';
+      document.getElementById('btnNavForm').classList.add('active');
+    } else {
+      document.getElementById('tabForm').style.display = 'none';
+      document.getElementById('tabStatus').style.display = 'block';
+      document.getElementById('btnNavStatus').classList.add('active');
+      if(!statusLoaded) loadStatusData();
+    }
+  }
+
+  function toggleStatView(view) {
+    document.getElementById('viewPendency').style.display = view === 'pendency' ? 'block' : 'none';
+    document.getElementById('viewUser').style.display = view === 'user' ? 'block' : 'none';
+  }
+
+  async function loadStatusData() {
+    showLoader("Fetching Analytics...");
+    const role = document.getElementById('displayUserName').getAttribute('data-role');
+    
+    const req = {
+      action: 'getStatus',
+      empCode: document.getElementById('activeEmpCode').value,
+      role: role
+    };
+
+    const res = await apiCall(req);
+    hideLoader();
+
+    if (res.status === 'success') {
+      renderPendency(res.data.pendency);
+      renderUserProgress(res.data.userStats);
+      document.getElementById('lastUpdateStats').innerText = res.data.lastUpdate;
+      statusLoaded = true;
+    } else {
+      alert("Failed to load stats");
+    }
+  }
+
+  function renderPendency(data) {
+    const container = document.getElementById('pendencyContainer');
+    if (!data || data.length === 0) { container.innerHTML = '<div class="text-center mt-5 text-muted">No Data Available</div>'; return; }
+
+    let html = '<div class="accordion" id="accStatus">';
+    data.forEach((zone, idx) => {
+      const colorClass = getProgColor(zone.pct);
+      const isExpanded = idx === 0 ? 'show' : ''; 
+      const btnCollapsed = idx === 0 ? '' : 'collapsed';
+
+      html += `
+        <div class="accordion-item border-0 shadow-sm mb-2" style="border-radius:8px; overflow:hidden;">
+          <h2 class="accordion-header">
+            <button class="accordion-button ${btnCollapsed} py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}">
+              <div class="w-100">
+                <div class="d-flex justify-content-between mb-1">
+                  <span class="fw-bold">${zone.zone}</span>
+                  <span class="fw-bold text-${colorClass}">${zone.pct}%</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar bg-${colorClass}" style="width: ${zone.pct}%"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-1 small text-muted">
+                  <span>Done: ${zone.done}/${zone.total}</span>
+                  <span>Pending: ${zone.pending}</span>
+                </div>
+              </div>
+            </button>
+          </h2>
+          <div id="collapse${idx}" class="accordion-collapse collapse ${isExpanded}" data-bs-parent="#accStatus">
+            <div class="accordion-body bg-light p-2">
+               <table class="table table-sm table-borderless drill-table m-0">
+                 <thead><tr class="text-muted border-bottom"><th>Division</th><th class="text-end">Done</th><th class="text-end">Gap</th><th class="text-end">%</th></tr></thead>
+                 <tbody>
+                    ${zone.divisions.map(d => `
+                      <tr>
+                        <td>${d.name}</td>
+                        <td class="text-end fw-bold text-dark">${d.done}</td>
+                        <td class="text-end text-danger">${d.pending}</td>
+                        <td class="text-end"><span class="badge bg-${getProgColor(d.pct)}">${d.pct}%</span></td>
+                      </tr>
+                    `).join('')}
+                 </tbody>
+               </table>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  function renderUserProgress(users) {
+    const container = document.getElementById('userStatsContainer');
+    if (!users || users.length === 0) { container.innerHTML = '<div class="text-center mt-4">No submissions found.</div>'; return; }
+
+    let html = '';
+    users.forEach(u => {
+      html += `
+        <div class="stat-card">
+           <div class="d-flex justify-content-between">
+              <div>
+                <h6 class="fw-bold mb-0">${u.name}</h6>
+                <span class="text-muted small">${u.code}</span>
+              </div>
+              <div class="text-end">
+                 <h3 class="fw-bold text-primary mb-0">${u.total}</h3>
+                 <small class="text-muted" style="font-size:0.65rem">TOTAL SUBMITS</small>
+              </div>
+           </div>
+           <hr class="my-2 opacity-25">
+           <div class="row text-center" style="font-size:0.8rem;">
+              <div class="col-4 border-end">
+                 <div class="fw-bold text-success">${u.today}</div>
+                 <div class="text-muted small">Today</div>
+              </div>
+              <div class="col-8">
+                 <div class="text-truncate text-dark fw-bold">${u.zones}</div>
+                 <div class="text-muted small">Active Zones</div>
+              </div>
+           </div>
+           <div class="mt-2 text-center bg-light rounded py-1">
+              <small class="text-muted" style="font-size:0.7rem">Last Active: ${u.lastActiveStr}</small>
+           </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+
+  function getProgColor(pct) {
+    if (pct >= 100) return 'success';
+    if (pct >= 50) return 'warning';
+    return 'danger';
+  }
+
+  // --- EXISTING HELPERS ---
   function handleImage(input, key) { if(input.files[0]) { const reader = new FileReader(); reader.onload = e => payload[key] = e.target.result; reader.readAsDataURL(input.files[0]); } }
   function populateSelect(id, idx, filters) { const sel = document.getElementById(id); sel.innerHTML = '<option value="">Select...</option>'; if(!masterData.length) return; const filtered = masterData.filter(r => filters.every((v, i) => v === null || r[i] === v)); const unique = [...new Set(filtered.map(r => r[idx]))].sort(); unique.forEach(val => { const opt = document.createElement('option'); opt.value = val; if(idx === 5 && completedFeeders.includes(val)) { opt.innerText = val + " (✅ Done)"; opt.disabled = true; } else opt.innerText = val; sel.appendChild(opt); }); }
   function filterHierarchy(level) { const vals = ['sel-zone','sel-circle','sel-div','sel-subdiv','sel-substn'].map(id => document.getElementById(id).value || null); if(level === 'zone') { populateSelect('sel-circle', 1, [vals[0]]); clearSelects(['sel-div', 'sel-subdiv', 'sel-substn', 'sel-feeder']); } if(level === 'circle') { populateSelect('sel-div', 2, [vals[0], vals[1]]); clearSelects(['sel-subdiv', 'sel-substn', 'sel-feeder']); } if(level === 'div') { populateSelect('sel-subdiv', 3, [vals[0], vals[1], vals[2]]); clearSelects(['sel-substn', 'sel-feeder']); } if(level === 'subdiv') { populateSelect('sel-substn', 4, [vals[0], vals[1], vals[2], vals[3]]); clearSelects(['sel-feeder']); } if(level === 'substn') { populateSelect('sel-feeder', 5, [vals[0], vals[1], vals[2], vals[3], vals[4]]); } }
@@ -466,5 +654,3 @@
 </script>
 </body>
 </html>
-
-
