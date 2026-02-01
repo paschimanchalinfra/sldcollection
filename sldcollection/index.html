@@ -124,7 +124,7 @@
           </div>
           <div class="col-6">
             <label class="form-label text-primary">Without Cable <span class="text-danger">*</span></label>
-            <input type="number" class="form-control" name="withoutCable" id="in-withoutCable" oninput="validateWithoutCable()">
+            <input type="number" class="form-control bg-light" name="withoutCable" id="in-withoutCable" readonly>
             <div id="err-withoutCable" class="val-msg"></div>
           </div>
         </div>
@@ -288,15 +288,20 @@
     let sumScope = 0;
     document.querySelectorAll('.kva-scope-in').forEach(el => sumScope += Number(el.value || 0));
     const ptw = Number(document.getElementById('cap_ptw').value || 0);
+    
+    // 1. Set Total & Not In Scope
     document.getElementById('out-totalScope').value = sumScope;
     document.getElementById('out-notInScope').value = ptw;
 
+    // 2. Calculate Balance
     const installed = Number(document.getElementById('in-installed').value || 0);
     const balance = Math.max(0, sumScope - ptw - installed);
     document.getElementById('out-balanceScope').value = balance;
 
+    // 3. Validate Cable Req
     const cableReq = Number(document.getElementById('in-cableReq').value || 0);
     const cableInput = document.getElementById('in-cableReq');
+    
     if (cableReq > balance) {
         cableInput.classList.add('val-error');
         document.getElementById('err-cableReq').innerText = `Max allowed: ${balance}`;
@@ -305,26 +310,18 @@
         document.getElementById('err-cableReq').innerText = "";
     }
 
+    // 4. AUTO-CALCULATE WITHOUT CABLE (New Logic)
+    // Formula: Balance - CableReq. (Clamp to 0 if negative)
+    const woCable = Math.max(0, balance - cableReq);
+    document.getElementById('in-withoutCable').value = woCable;
+
+    // 5. Toggle Cable Table
     const tableSec = document.getElementById('cableDetailsSection');
     if(cableReq > 0 && !cableInput.classList.contains('val-error')) {
         tableSec.style.display = 'block';
         validateTable(); 
     } else {
         tableSec.style.display = 'none';
-    }
-    
-    validateWithoutCable();
-  }
-
-  function validateWithoutCable() {
-    const balance = Number(document.getElementById('out-balanceScope').value || 0);
-    const woInput = document.getElementById('in-withoutCable');
-    if (Number(woInput.value || 0) > balance) {
-        woInput.classList.add('val-error');
-        document.getElementById('err-withoutCable').innerText = `Cannot exceed Balance (${balance})`;
-    } else {
-        woInput.classList.remove('val-error');
-        document.getElementById('err-withoutCable').innerText = "";
     }
   }
 
@@ -654,3 +651,4 @@
 </script>
 </body>
 </html>
+
