@@ -337,17 +337,30 @@
     if(document.querySelector('.val-error')) return alert("Please fix validation errors highlighted in red.");
     if(!payload.signoffBase64 || !payload.sldBase64) return alert("Please upload both images.");
 
-    // 2. Strict Table Validation (Mandatory Check)
+    // 2. Strict Table Validation
     const globalReq = Number(document.getElementById('in-cableReq').value || 0);
     let tableSum = 0;
     document.querySelectorAll('.cable-dt-count').forEach(el => tableSum += Number(el.value || 0));
 
     if (tableSum !== globalReq) {
-        return alert(`Validation Error:\nYou entered Cable Req = ${globalReq}, but the details table adds up to ${tableSum}.\n\nPlease ensure the "Total DTs" column in the table matches exactly.`);
+        return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`);
     }
 
-    // 3. GENERATE SCALABLE DATA (Fix for Empty Data)
-    // We rebuild the array right here to guarantee it captures the latest state
+    // 3. GENERATE JSON PAYLOADS
+    
+    // A. Scope Breakup JSON (New Requirement)
+    const scopeArray = [];
+    document.querySelectorAll('.kva-scope-in').forEach(input => {
+        const val = Number(input.value || 0);
+        // We store all keys even if 0 to maintain full scope structure, or filter >0. 
+        // Storing >0 is cleaner for JSON.
+        if (val > 0) {
+            const kvaName = input.name.replace('cap_', ''); // Extract '10', '16'
+            scopeArray.push({ k: kvaName, v: val });
+        }
+    });
+
+    // B. Cable Details JSON
     const cableDetailsArray = [];
     const cableSummaryArray = [];
 
@@ -358,20 +371,17 @@
             const lenInput = document.querySelector(`.cable-len[data-kva="${kva}"]`);
             const totalLen = Number(lenInput.value || 0);
             
-            // Build Objects
             cableDetailsArray.push({
-                k: kva,             // Key
-                c: count,           // Count
-                s: CABLE_MAP[kva],  // Size
-                l: totalLen         // Length
+                k: kva,             
+                c: count,           
+                s: CABLE_MAP[kva],  
+                l: totalLen         
             });
             cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`);
         }
     });
 
-    const finalJSON = cableDetailsArray.length ? JSON.stringify(cableDetailsArray) : "[]";
-    const finalSummary = cableSummaryArray.length ? cableSummaryArray.join(" | ") : "None";
-
+    // 4. PREPARE FINAL DATA OBJECT
     const data = {
         action: 'submit',
         uploaderName: document.getElementById('uploaderName').value,
@@ -387,9 +397,10 @@
         withoutCable: document.getElementById('in-withoutCable').value,
         ptwCount: document.getElementById('cap_ptw').value,
         
-        // Explicitly attaching the data we just built
-        cableJSON: finalJSON,
-        cableSummary: finalSummary,
+        // --- NEW FIELDS ---
+        scopeJSON: JSON.stringify(scopeArray),          // Column R
+        cableSummary: cableSummaryArray.join(" | ") || "None", // Column S
+        cableJSON: JSON.stringify(cableDetailsArray),   // Column T
         
         signoffBase64: payload.signoffBase64,
         sldBase64: payload.sldBase64
@@ -460,3 +471,4 @@
 </script>
 </body>
 </html>
+
