@@ -16,19 +16,21 @@
     .val-error { border-color: var(--error) !important; background-color: #fff8f8; }
     .val-msg { color: var(--error); font-size: 0.7rem; font-weight: 700; display: block; margin-top: 2px; }
 
-    /* New Table Styles */
+    /* Cable Table Styles */
     .cable-table { width: 100%; font-size: 0.8rem; border-collapse: collapse; text-align: center; }
     .cable-table th { background-color: #e3f2fd; color: var(--primary); padding: 8px; border: 1px solid #dee2e6; vertical-align: middle; }
     .cable-table td { padding: 6px; border: 1px solid #dee2e6; vertical-align: middle; }
     .cable-table input { width: 100%; text-align: center; border: 1px solid #ced4da; padding: 4px; border-radius: 4px; }
     .cable-table input:focus { outline: none; border-color: var(--primary); }
-    .bg-row-light { background-color: #f8f9fa; }
+    .cable-table input:read-only { background-color: #e9ecef; color: #666; cursor: not-allowed; }
     
+    .hidden-row { display: none; }
+    .show-more-btn { font-size: 0.8rem; font-weight: 600; text-decoration: none; cursor: pointer; display: block; margin-top: 10px; text-align: center; }
+
     /* Overlays */
     .loader-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.98); z-index: 4000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
     .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
     
-    /* Tab Bar */
     .nav-tabs-custom { position: fixed; bottom: 0; left: 0; width: 100%; background: white; z-index: 1000; display: flex; justify-content: space-around; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
     .nav-link-custom { border: none; background: transparent; color: #6c757d; font-weight: 600; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
     .nav-link-custom.active { background-color: var(--primary); color: white; }
@@ -80,7 +82,7 @@
             <div class="col-4">
                 <div class="bg-warning-subtle p-2 rounded border border-warning text-center">
                     <label class="small fw-bold text-danger d-block">PTW</label>
-                    <input type="number" class="form-control text-center p-1 kva-in" id="cap_ptw" name="ptwCount" value="0" min="0" oninput="calculateScope()">
+                    <input type="number" class="form-control text-center p-1 kva-scope-in" name="ptwCount" id="cap_ptw" value="0" min="0" oninput="calculateScope()">
                 </div>
             </div>
             </div>
@@ -94,7 +96,7 @@
             <input type="number" class="form-control bg-light" id="out-totalScope" value="0" readonly>
           </div>
           <div class="col-6">
-            <label class="form-label text-muted">Not In Scope (PTW)</label>
+            <label class="form-label text-muted">Not In Scope</label>
             <input type="number" class="form-control bg-light" id="out-notInScope" value="0" readonly>
           </div>
 
@@ -113,9 +115,7 @@
           <div class="col-6">
             <label class="form-label fw-bold text-success">Balance Scope</label>
             <input type="number" class="form-control fw-bold text-success bg-light" name="balanceScope" id="out-balanceScope" value="0" readonly>
-             <small class="text-muted" style="font-size:0.65rem;">(Total - Inst - Cable)</small>
           </div>
-          
           <div class="col-6">
             <label class="form-label text-primary">Without Cable <span class="text-danger">*</span></label>
             <input type="number" class="form-control" name="withoutCable" id="in-withoutCable" oninput="validateWithoutCable()">
@@ -131,11 +131,11 @@
                 <table class="cable-table">
                     <thead>
                         <tr>
-                            <th>DT Capacity<br>(KVA)</th>
-                            <th style="width:18%;">Total DTs<br>(Count)</th>
+                            <th>DT Cap<br>(KVA)</th>
+                            <th style="width:20%;">Total DTs<br>(Count)</th>
                             <th>Cable Size<br>(Sq. mm)</th>
-                            <th>Total Length<br>(Mtr)</th>
-                            <th>Avg Length<br>(Max 34m)</th>
+                            <th>Total Len<br>(Mtr)</th>
+                            <th>Avg Len<br>(Max 34m)</th>
                         </tr>
                     </thead>
                     <tbody id="cableTableBody">
@@ -152,6 +152,11 @@
                 </table>
             </div>
             <div id="tbl-error-msg" class="val-msg text-center mt-2"></div>
+            <div class="text-center">
+                <a class="show-more-btn text-primary" onclick="toggleHighCapacity()">
+                    <i class="bi bi-chevron-down"></i> Show more rating
+                </a>
+            </div>
         </div>
       </div>
 
@@ -180,12 +185,13 @@
     800:1000, 1000:1000, 1200:1000, 1500:1000, 2000:1000
   };
   
+  const KVA_LIST = [10,16,25,63,100,160,250,315,400,630,750,800,1000,1200,1500,2000];
   let masterData = [], completedFeeders = [], payload = { signoffBase64: null, sldBase64: null };
 
   // =============== INIT ===============
   window.onload = function() {
     renderKvaInputs();
-    renderCableTableRows(); // Render empty table structure on load
+    renderCableTableRows();
     const saved = localStorage.getItem('sld_creds');
     if(saved) {
        const c = JSON.parse(saved);
@@ -198,9 +204,8 @@
   };
 
   function renderKvaInputs() {
-    const kvas = [10,16,25,63,100,160,250,315,400,630,750,800,1000,1200,1500,2000];
     const container = document.getElementById('kvaInputs');
-    kvas.forEach(k => {
+    KVA_LIST.forEach(k => {
         container.innerHTML += `
         <div class="col-3">
             <div class="text-center">
@@ -212,15 +217,16 @@
   }
 
   function renderCableTableRows() {
-     const kvas = [10,16,25,63,100,160,250,315,400,630,750,800,1000,1200,1500,2000];
      const tbody = document.getElementById('cableTableBody');
      let html = '';
-     kvas.forEach(k => {
+     KVA_LIST.forEach(k => {
+         // Hide 750+ by default
+         const isHidden = k >= 750 ? 'hidden-row high-cap' : '';
          html += `
-         <tr class="bg-white">
+         <tr class="bg-white ${isHidden}">
              <td class="fw-bold">${k}</td>
              <td><input type="number" class="cable-dt-count" data-kva="${k}" placeholder="0" oninput="validateTable()"></td>
-             <td class="text-muted">${CABLE_MAP[k]}</td>
+             <td><input type="text" class="cable-size" value="${CABLE_MAP[k]}" readonly></td>
              <td><input type="number" class="cable-len" data-kva="${k}" placeholder="0" oninput="validateTable()"></td>
              <td class="fw-bold small cable-avg" id="avg-${k}">0</td>
          </tr>`;
@@ -228,7 +234,19 @@
      tbody.innerHTML = html;
   }
 
-  // =============== API & AUTH ===============
+  function toggleHighCapacity() {
+      document.querySelectorAll('.high-cap').forEach(el => {
+          el.classList.toggle('hidden-row');
+      });
+      const btn = document.querySelector('.show-more-btn');
+      if(btn.innerHTML.includes('Show')) {
+          btn.innerHTML = '<i class="bi bi-chevron-up"></i> Show less rating';
+      } else {
+          btn.innerHTML = '<i class="bi bi-chevron-down"></i> Show more rating';
+      }
+  }
+
+  // =============== API ===============
   async function apiCall(data) {
     try {
         const res = await fetch(API_URL, {
@@ -272,21 +290,20 @@
     }
   }
 
-  // =============== LOGIC ===============
+  // =============== VALIDATION LOGIC ===============
   function calculateScope() {
-    // 1. Calculate Total Scope
+    // 1. Total Scope
     let sumScope = 0;
     document.querySelectorAll('.kva-scope-in').forEach(el => sumScope += Number(el.value || 0));
     const ptw = Number(document.getElementById('cap_ptw').value || 0);
     document.getElementById('out-totalScope').value = sumScope;
     document.getElementById('out-notInScope').value = ptw;
 
-    // 2. Calculate Balance
+    // 2. Balance
     const installed = Number(document.getElementById('in-installed').value || 0);
     const cableReq = Number(document.getElementById('in-cableReq').value || 0);
     const available = sumScope - installed;
 
-    // Validate Cable Req Input
     const cableInput = document.getElementById('in-cableReq');
     if (cableReq > available) {
         cableInput.classList.add('val-error');
@@ -296,16 +313,15 @@
         document.getElementById('err-cableReq').innerText = "";
     }
 
-    // Set Balance
     const balance = Math.max(0, sumScope - installed - cableReq);
     document.getElementById('out-balanceScope').value = balance;
     validateWithoutCable();
 
-    // Toggle Table Visibility
+    // Toggle Table
     const tableSec = document.getElementById('cableDetailsSection');
     if(cableReq > 0 && !cableInput.classList.contains('val-error')) {
         tableSec.style.display = 'block';
-        validateTable(); // Re-validate table against new global limit
+        validateTable(); 
     } else {
         tableSec.style.display = 'none';
     }
@@ -328,7 +344,6 @@
     let currentSum = 0;
     let lenSum = 0;
 
-    // Iterate all table rows
     document.querySelectorAll('.cable-dt-count').forEach(input => {
         const count = Number(input.value || 0);
         const kva = input.getAttribute('data-kva');
@@ -339,13 +354,14 @@
         currentSum += count;
         lenSum += totalLen;
 
-        // Validation 1: Length Logic (Max 34m per DT)
+        // Rule: Max 34m per DT
         const maxLen = count * 34;
         const avg = count > 0 ? (totalLen / count).toFixed(1) : 0;
         
+        // Visual Warning Logic
         if (totalLen > maxLen) {
             lenInput.classList.add('val-error');
-            avgDisplay.innerHTML = `<span class="text-danger">${avg}</span><div style="font-size:0.6rem; color:red;">Max 34m allowed</div>`;
+            avgDisplay.innerHTML = `<span class="text-danger">${avg}</span><div style="font-size:0.6rem; color:red;">Max 34m/DT</div>`;
         } else {
             lenInput.classList.remove('val-error');
             if(count > 0 && totalLen > 0) {
@@ -356,23 +372,19 @@
         }
     });
 
-    // Validation 2: Sum of Breakdown vs Global Limit
     document.getElementById('tbl-sum-count').innerText = currentSum;
     document.getElementById('tbl-sum-len').innerText = lenSum;
     
+    // Rule: Table Sum vs Global Req
     const errDiv = document.getElementById('tbl-error-msg');
     
-    // We check input fields. If SUM exceeds Global, mark the *Last Modified* input? 
-    // Easier: Mark the whole table or show global error.
     if (currentSum > globalLimit) {
-        errDiv.innerText = `Error: Total DTs in table (${currentSum}) exceeds 'Cable Req' (${globalLimit}) specified above.`;
-        // Also highlight inputs to show error state
+        errDiv.innerText = `Error: Table Count (${currentSum}) exceeds Scope 'Cable Req' (${globalLimit})`;
         document.querySelectorAll('.cable-dt-count').forEach(i => {
              if(Number(i.value)>0) i.classList.add('val-error');
         });
     } else {
         errDiv.innerText = "";
-        // Only remove error class if it's not violating something else (not implemented here, so safe to remove)
         document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.remove('val-error'));
     }
   }
@@ -381,16 +393,16 @@
   async function submitForm() {
     const form = document.getElementById('mainForm');
     
-    // Check Validations
+    // Checks
     if(document.querySelector('.val-error')) return alert("Please fix validation errors highlighted in red.");
     if(document.getElementById('cableDetailsSection').style.display !== 'none') {
         const globalReq = Number(document.getElementById('in-cableReq').value);
         const tableSum = Number(document.getElementById('tbl-sum-count').innerText);
-        if(tableSum !== globalReq) return alert(`Table Mismatch: defined ${globalReq} DTs, but table details sum to ${tableSum}.`);
+        if(tableSum > globalReq) return alert("Validation Error: Table DT count exceeds Cable Required count.");
     }
     if(!payload.signoffBase64 || !payload.sldBase64) return alert("Please upload both images.");
 
-    // Gather Data
+    // Data Construction
     const data = {
         action: 'submit',
         uploaderName: document.getElementById('uploaderName').value,
@@ -406,21 +418,20 @@
         withoutCable: document.getElementById('in-withoutCable').value,
         ptwCount: document.getElementById('cap_ptw').value,
         
-        cableDetails: {}, // To store table data
+        cableDetails: {}, 
         signoffBase64: payload.signoffBase64,
         sldBase64: payload.sldBase64
     };
 
-    // Gather Table Details
+    // Collect Cable Data (Count + Size)
     document.querySelectorAll('.cable-dt-count').forEach(input => {
         const kva = input.getAttribute('data-kva');
         const count = Number(input.value || 0);
-        if(count > 0) {
-            data.cableDetails[kva] = {
-                count: count,
-                size: CABLE_MAP[kva]
-            };
-        }
+        // We explicitly send 0 if count is 0
+        data.cableDetails[kva] = {
+            count: count,
+            size: CABLE_MAP[kva] // Fixed size based on Map
+        };
     });
 
     showLoader("Submitting...");
@@ -469,4 +480,3 @@
 </script>
 </body>
 </html>
-
