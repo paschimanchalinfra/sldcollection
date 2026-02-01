@@ -16,13 +16,13 @@
     .val-error { border-color: var(--error) !important; background-color: #fff8f8; }
     .val-msg { color: var(--error); font-size: 0.7rem; font-weight: 700; display: block; margin-top: 2px; }
 
-    /* Cable Table Styles */
-    .cable-table { width: 100%; font-size: 0.8rem; border-collapse: collapse; text-align: center; }
-    .cable-table th { background-color: #e3f2fd; color: var(--primary); padding: 8px; border: 1px solid #dee2e6; vertical-align: middle; }
-    .cable-table td { padding: 6px; border: 1px solid #dee2e6; vertical-align: middle; }
-    .cable-table input { width: 100%; text-align: center; border: 1px solid #ced4da; padding: 4px; border-radius: 4px; }
+    /* Cable Table Styles - Matching Image Structure */
+    .cable-table { width: 100%; font-size: 0.75rem; border-collapse: collapse; text-align: center; }
+    .cable-table th { background-color: #e3f2fd; color: var(--primary); padding: 8px 4px; border: 1px solid #dee2e6; vertical-align: middle; white-space: normal; }
+    .cable-table td { padding: 4px; border: 1px solid #dee2e6; vertical-align: middle; }
+    .cable-table input { width: 100%; text-align: center; border: 1px solid #ced4da; padding: 4px; border-radius: 4px; font-size: 0.8rem; }
     .cable-table input:focus { outline: none; border-color: var(--primary); }
-    .cable-table input:read-only { background-color: #e9ecef; color: #666; cursor: not-allowed; }
+    .cable-table input:read-only { background-color: #f8f9fa; color: #666; }
     
     .hidden-row { display: none; }
     .show-more-btn { font-size: 0.8rem; font-weight: 600; text-decoration: none; cursor: pointer; display: block; margin-top: 10px; text-align: center; }
@@ -82,7 +82,7 @@
             <div class="col-4">
                 <div class="bg-warning-subtle p-2 rounded border border-warning text-center">
                     <label class="small fw-bold text-danger d-block">PTW</label>
-                    <input type="number" class="form-control text-center p-1 kva-scope-in" name="ptwCount" id="cap_ptw" value="0" min="0" oninput="calculateScope()">
+                    <input type="number" class="form-control text-center p-1 kva-scope-in" name="cap_ptw" id="cap_ptw" value="0" min="0" oninput="calculateScope()">
                 </div>
             </div>
             </div>
@@ -131,11 +131,12 @@
                 <table class="cable-table">
                     <thead>
                         <tr>
-                            <th>DT Cap<br>(KVA)</th>
-                            <th style="width:20%;">Total DTs<br>(Count)</th>
-                            <th>Cable Size<br>(Sq. mm)</th>
-                            <th>Total Len<br>(Mtr)</th>
-                            <th>Avg Len<br>(Max 34m)</th>
+                            <th style="width:15%">DT CAPACITY (KVA)</th>
+                            <th style="width:20%">TOTAL DTS (COUNT)</th>
+                            <th style="width:20%">DTS REQ CABLE (COUNT)</th>
+                            <th style="width:15%">CABLE SIZE (SQ. MM)</th>
+                            <th style="width:15%">TOTAL LENGTH (MTR)</th>
+                            <th style="width:15%">AVG LENGTH (MAX 34M)</th>
                         </tr>
                     </thead>
                     <tbody id="cableTableBody">
@@ -144,6 +145,7 @@
                          <tr>
                              <td>TOTAL</td>
                              <td id="tbl-sum-count">0</td>
+                             <td>-</td>
                              <td>-</td>
                              <td id="tbl-sum-len">0</td>
                              <td>-</td>
@@ -188,7 +190,6 @@
   const KVA_LIST = [10,16,25,63,100,160,250,315,400,630,750,800,1000,1200,1500,2000];
   let masterData = [], completedFeeders = [], payload = { signoffBase64: null, sldBase64: null };
 
-  // =============== INIT ===============
   window.onload = function() {
     renderKvaInputs();
     renderCableTableRows();
@@ -203,6 +204,7 @@
     }
   };
 
+  // Section 2: Scope Inputs
   function renderKvaInputs() {
     const container = document.getElementById('kvaInputs');
     KVA_LIST.forEach(k => {
@@ -210,22 +212,23 @@
         <div class="col-3">
             <div class="text-center">
                 <label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label>
-                <input type="number" class="form-control text-center p-1 kva-scope-in" name="cap_${k}" value="0" oninput="calculateScope()">
+                <input type="number" class="form-control text-center p-1 kva-scope-in" name="cap_${k}" value="0" min="0" oninput="calculateScope()">
             </div>
         </div>`;
     });
   }
 
+  // Section 3: Cable Table (Matching Image Structure)
   function renderCableTableRows() {
      const tbody = document.getElementById('cableTableBody');
      let html = '';
      KVA_LIST.forEach(k => {
-         // Hide 750+ by default
          const isHidden = k >= 750 ? 'hidden-row high-cap' : '';
          html += `
          <tr class="bg-white ${isHidden}">
              <td class="fw-bold">${k}</td>
              <td><input type="number" class="cable-dt-count" data-kva="${k}" placeholder="0" oninput="validateTable()"></td>
+             <td><input type="number" class="cable-dt-mirror" id="mirror-${k}" placeholder="0" readonly style="background:#eee;"></td>
              <td><input type="text" class="cable-size" value="${CABLE_MAP[k]}" readonly></td>
              <td><input type="number" class="cable-len" data-kva="${k}" placeholder="0" oninput="validateTable()"></td>
              <td class="fw-bold small cable-avg" id="avg-${k}">0</td>
@@ -235,18 +238,162 @@
   }
 
   function toggleHighCapacity() {
-      document.querySelectorAll('.high-cap').forEach(el => {
-          el.classList.toggle('hidden-row');
-      });
+      document.querySelectorAll('.high-cap').forEach(el => el.classList.toggle('hidden-row'));
       const btn = document.querySelector('.show-more-btn');
-      if(btn.innerHTML.includes('Show')) {
-          btn.innerHTML = '<i class="bi bi-chevron-up"></i> Show less rating';
-      } else {
-          btn.innerHTML = '<i class="bi bi-chevron-down"></i> Show more rating';
-      }
+      btn.innerHTML = btn.innerHTML.includes('Show') ? '<i class="bi bi-chevron-up"></i> Show less rating' : '<i class="bi bi-chevron-down"></i> Show more rating';
   }
 
-  // =============== API ===============
+  // --- LOGIC ---
+  function calculateScope() {
+    // 1. Total Scope
+    let sumScope = 0;
+    document.querySelectorAll('.kva-scope-in').forEach(el => sumScope += Number(el.value || 0));
+    const ptw = Number(document.getElementById('cap_ptw').value || 0);
+    document.getElementById('out-totalScope').value = sumScope;
+    document.getElementById('out-notInScope').value = ptw;
+
+    // 2. Balance = Total - PTW - Installed (Fixed Formula)
+    const installed = Number(document.getElementById('in-installed').value || 0);
+    const balance = Math.max(0, sumScope - ptw - installed);
+    document.getElementById('out-balanceScope').value = balance;
+
+    // 3. Validate Cable Req <= Balance
+    const cableReq = Number(document.getElementById('in-cableReq').value || 0);
+    const cableInput = document.getElementById('in-cableReq');
+    if (cableReq > balance) {
+        cableInput.classList.add('val-error');
+        document.getElementById('err-cableReq').innerText = `Max allowed: ${balance}`;
+    } else {
+        cableInput.classList.remove('val-error');
+        document.getElementById('err-cableReq').innerText = "";
+    }
+
+    // 4. Show Table
+    const tableSec = document.getElementById('cableDetailsSection');
+    if(cableReq > 0 && !cableInput.classList.contains('val-error')) {
+        tableSec.style.display = 'block';
+        validateTable(); 
+    } else {
+        tableSec.style.display = 'none';
+    }
+    
+    validateWithoutCable();
+  }
+
+  function validateWithoutCable() {
+    const balance = Number(document.getElementById('out-balanceScope').value || 0);
+    const woInput = document.getElementById('in-withoutCable');
+    if (Number(woInput.value || 0) > balance) {
+        woInput.classList.add('val-error');
+        document.getElementById('err-withoutCable').innerText = `Cannot exceed Balance (${balance})`;
+    } else {
+        woInput.classList.remove('val-error');
+        document.getElementById('err-withoutCable').innerText = "";
+    }
+  }
+
+  function validateTable() {
+    const globalLimit = Number(document.getElementById('in-cableReq').value || 0);
+    let currentSum = 0;
+    let lenSum = 0;
+
+    document.querySelectorAll('.cable-dt-count').forEach(input => {
+        const count = Number(input.value || 0);
+        const kva = input.getAttribute('data-kva');
+        const lenInput = document.querySelector(`.cable-len[data-kva="${kva}"]`);
+        const totalLen = Number(lenInput.value || 0);
+        const avgDisplay = document.getElementById(`avg-${kva}`);
+        
+        // Mirror Logic for "DTs Req Cable"
+        document.getElementById(`mirror-${kva}`).value = count;
+
+        currentSum += count;
+        lenSum += totalLen;
+
+        const maxLen = count * 34;
+        const avg = count > 0 ? (totalLen / count).toFixed(1) : 0;
+        
+        if (totalLen > maxLen) {
+            lenInput.classList.add('val-error');
+            avgDisplay.innerHTML = `<span class="text-danger">${avg}</span><div style="font-size:0.6rem; color:red;">Max 34m/DT</div>`;
+        } else {
+            lenInput.classList.remove('val-error');
+            avgDisplay.innerHTML = (count > 0 && totalLen > 0) ? `<span class="text-success">${avg}</span>` : "0";
+        }
+    });
+
+    document.getElementById('tbl-sum-count').innerText = currentSum;
+    document.getElementById('tbl-sum-len').innerText = lenSum;
+    
+    const errDiv = document.getElementById('tbl-error-msg');
+    if (currentSum > globalLimit) {
+        errDiv.innerText = `Error: Table Count (${currentSum}) exceeds 'Cable Req' (${globalLimit})`;
+        document.querySelectorAll('.cable-dt-count').forEach(i => { if(Number(i.value)>0) i.classList.add('val-error'); });
+    } else {
+        errDiv.innerText = "";
+        document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.remove('val-error'));
+    }
+  }
+
+  async function submitForm() {
+    const form = document.getElementById('mainForm');
+    
+    if(document.querySelector('.val-error')) return alert("Please fix validation errors.");
+    if(document.getElementById('cableDetailsSection').style.display !== 'none') {
+        const globalReq = Number(document.getElementById('in-cableReq').value);
+        const tableSum = Number(document.getElementById('tbl-sum-count').innerText);
+        if(tableSum > globalReq) return alert("Validation Error: Table DT count exceeds Cable Required count.");
+    }
+    if(!payload.signoffBase64 || !payload.sldBase64) return alert("Please upload both images.");
+
+    const data = {
+        action: 'submit',
+        uploaderName: document.getElementById('uploaderName').value,
+        uploaderEmpCode: document.getElementById('activeEmpCode').value,
+        zone: form.zone.value, circle: form.circle.value, division: form.division.value,
+        subdiv: form.subdiv.value, substation: form.substation.value, feeder: form.feeder.value,
+        
+        totalScope: document.getElementById('out-totalScope').value,
+        totalInstalled: document.getElementById('in-installed').value,
+        balanceScope: document.getElementById('out-balanceScope').value,
+        notInScope: document.getElementById('out-notInScope').value,
+        cableReq: document.getElementById('in-cableReq').value,
+        withoutCable: document.getElementById('in-withoutCable').value,
+        ptwCount: document.getElementById('cap_ptw').value,
+        
+        cableDetails: {}, 
+        signoffBase64: payload.signoffBase64,
+        sldBase64: payload.sldBase64
+    };
+    
+    // Add Scope Inputs to Payload (cap_10, cap_16...)
+    KVA_LIST.forEach(k => {
+        const el = document.querySelector(`input[name="cap_${k}"]`);
+        if(el) data[`cap_${k}`] = el.value;
+    });
+
+    // Add Cable Details to Payload
+    document.querySelectorAll('.cable-dt-count').forEach(input => {
+        const kva = input.getAttribute('data-kva');
+        const count = Number(input.value || 0);
+        data.cableDetails[kva] = {
+            count: count,
+            size: CABLE_MAP[kva]
+        };
+    });
+
+    showLoader("Submitting...");
+    const res = await apiCall(data);
+    hideLoader();
+
+    if(res.status === 'success') {
+        alert("Submission Successful!");
+        location.reload();
+    } else {
+        alert("Error: " + res.message);
+    }
+  }
+
   async function apiCall(data) {
     try {
         const res = await fetch(API_URL, {
@@ -290,200 +437,9 @@
     }
   }
 
-  // =============== VALIDATION LOGIC ===============
-  function calculateScope() {
-    // 1. Calculate Total Scope
-    // This sums up all inputs with class 'kva-scope-in' (includes PTW and all DT capacities)
-    let sumScope = 0;
-    document.querySelectorAll('.kva-scope-in').forEach(el => sumScope += Number(el.value || 0));
-    
-    // 2. Get Not In Scope (PTW) and Installed
-    const ptw = Number(document.getElementById('cap_ptw').value || 0);
-    const installed = Number(document.getElementById('in-installed').value || 0);
-
-    // Update Read-Only Fields
-    document.getElementById('out-totalScope').value = sumScope;
-    document.getElementById('out-notInScope').value = ptw;
-
-    // 3. NEW FORMULA: Balance = Total Scope - Not In Scope - Installed
-    // We use Math.max(0, ...) to ensure it never shows a negative number
-    const balance = Math.max(0, sumScope - ptw - installed);
-    document.getElementById('out-balanceScope').value = balance;
-
-    // 4. Validate Cable Req Input
-    // (Ensure Cable Req does not exceed the calculated Balance)
-    const cableReq = Number(document.getElementById('in-cableReq').value || 0);
-    const cableInput = document.getElementById('in-cableReq');
-    
-    // Logic: You cannot require cable for more DTs than exist in the Balance Scope
-    if (cableReq > balance) {
-        cableInput.classList.add('val-error');
-        document.getElementById('err-cableReq').innerText = `Max allowed: ${balance}`;
-    } else {
-        cableInput.classList.remove('val-error');
-        document.getElementById('err-cableReq').innerText = "";
-    }
-
-    // 5. Validate Without Cable
-    validateWithoutCable();
-
-    // 6. Toggle Table Visibility
-    const tableSec = document.getElementById('cableDetailsSection');
-    // Show table if Cable Req > 0 AND it is valid
-    if(cableReq > 0 && !cableInput.classList.contains('val-error')) {
-        tableSec.style.display = 'block';
-        validateTable(); 
-    } else {
-        tableSec.style.display = 'none';
-    }
-  }
-
-  function validateWithoutCable() {
-    const balance = Number(document.getElementById('out-balanceScope').value || 0);
-    const woInput = document.getElementById('in-withoutCable');
-    if (Number(woInput.value || 0) > balance) {
-        woInput.classList.add('val-error');
-        document.getElementById('err-withoutCable').innerText = `Cannot exceed Balance (${balance})`;
-    } else {
-        woInput.classList.remove('val-error');
-        document.getElementById('err-withoutCable').innerText = "";
-    }
-  }
-
-  function validateTable() {
-    const globalLimit = Number(document.getElementById('in-cableReq').value || 0);
-    let currentSum = 0;
-    let lenSum = 0;
-
-    document.querySelectorAll('.cable-dt-count').forEach(input => {
-        const count = Number(input.value || 0);
-        const kva = input.getAttribute('data-kva');
-        const lenInput = document.querySelector(`.cable-len[data-kva="${kva}"]`);
-        const totalLen = Number(lenInput.value || 0);
-        const avgDisplay = document.getElementById(`avg-${kva}`);
-
-        currentSum += count;
-        lenSum += totalLen;
-
-        // Rule: Max 34m per DT
-        const maxLen = count * 34;
-        const avg = count > 0 ? (totalLen / count).toFixed(1) : 0;
-        
-        // Visual Warning Logic
-        if (totalLen > maxLen) {
-            lenInput.classList.add('val-error');
-            avgDisplay.innerHTML = `<span class="text-danger">${avg}</span><div style="font-size:0.6rem; color:red;">Max 34m/DT</div>`;
-        } else {
-            lenInput.classList.remove('val-error');
-            if(count > 0 && totalLen > 0) {
-                 avgDisplay.innerHTML = `<span class="text-success">${avg}</span>`;
-            } else {
-                 avgDisplay.innerText = "0";
-            }
-        }
-    });
-
-    document.getElementById('tbl-sum-count').innerText = currentSum;
-    document.getElementById('tbl-sum-len').innerText = lenSum;
-    
-    // Rule: Table Sum vs Global Req
-    const errDiv = document.getElementById('tbl-error-msg');
-    
-    if (currentSum > globalLimit) {
-        errDiv.innerText = `Error: Table Count (${currentSum}) exceeds Scope 'Cable Req' (${globalLimit})`;
-        document.querySelectorAll('.cable-dt-count').forEach(i => {
-             if(Number(i.value)>0) i.classList.add('val-error');
-        });
-    } else {
-        errDiv.innerText = "";
-        document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.remove('val-error'));
-    }
-  }
-
-  // =============== SUBMIT ===============
-  async function submitForm() {
-    const form = document.getElementById('mainForm');
-    
-    // Checks
-    if(document.querySelector('.val-error')) return alert("Please fix validation errors highlighted in red.");
-    if(document.getElementById('cableDetailsSection').style.display !== 'none') {
-        const globalReq = Number(document.getElementById('in-cableReq').value);
-        const tableSum = Number(document.getElementById('tbl-sum-count').innerText);
-        if(tableSum > globalReq) return alert("Validation Error: Table DT count exceeds Cable Required count.");
-    }
-    if(!payload.signoffBase64 || !payload.sldBase64) return alert("Please upload both images.");
-
-    // Data Construction
-    const data = {
-        action: 'submit',
-        uploaderName: document.getElementById('uploaderName').value,
-        uploaderEmpCode: document.getElementById('activeEmpCode').value,
-        zone: form.zone.value, circle: form.circle.value, division: form.division.value,
-        subdiv: form.subdiv.value, substation: form.substation.value, feeder: form.feeder.value,
-        
-        totalScope: document.getElementById('out-totalScope').value,
-        totalInstalled: document.getElementById('in-installed').value,
-        balanceScope: document.getElementById('out-balanceScope').value,
-        notInScope: document.getElementById('out-notInScope').value,
-        cableReq: document.getElementById('in-cableReq').value,
-        withoutCable: document.getElementById('in-withoutCable').value,
-        ptwCount: document.getElementById('cap_ptw').value,
-        
-        cableDetails: {}, 
-        signoffBase64: payload.signoffBase64,
-        sldBase64: payload.sldBase64
-    };
-
-    // Collect Cable Data (Count + Size)
-    document.querySelectorAll('.cable-dt-count').forEach(input => {
-        const kva = input.getAttribute('data-kva');
-        const count = Number(input.value || 0);
-        // We explicitly send 0 if count is 0
-        data.cableDetails[kva] = {
-            count: count,
-            size: CABLE_MAP[kva] // Fixed size based on Map
-        };
-    });
-
-    showLoader("Submitting...");
-    const res = await apiCall(data);
-    hideLoader();
-
-    if(res.status === 'success') {
-        alert("Submission Successful!");
-        location.reload();
-    } else {
-        alert("Error: " + res.message);
-    }
-  }
-
-  // =============== UTILS ===============
-  function handleImage(input, key) {
-    if(input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = e => payload[key] = e.target.result;
-        reader.readAsDataURL(input.files[0]);
-    }
-  }
-  function populateSelect(id, idx, filters) {
-    const sel = document.getElementById(id); sel.innerHTML = '<option value="">Select...</option>';
-    if(!masterData.length) return;
-    const filtered = masterData.filter(r => filters.every((v, i) => v === null || r[i] === v));
-    const unique = [...new Set(filtered.map(r => r[idx]))].sort();
-    unique.forEach(val => {
-       const opt = document.createElement('option'); opt.value = val;
-       if(idx === 5 && completedFeeders.includes(val)) { opt.innerText = val + " (✅ Done)"; opt.disabled = true; } else opt.innerText = val;
-       sel.appendChild(opt);
-    });
-  }
-  function filterHierarchy(level) {
-    const vals = ['sel-zone','sel-circle','sel-div','sel-subdiv','sel-substn'].map(id => document.getElementById(id).value || null);
-    if(level === 'zone') { populateSelect('sel-circle', 1, [vals[0]]); clearSelects(['sel-div', 'sel-subdiv', 'sel-substn', 'sel-feeder']); }
-    if(level === 'circle') { populateSelect('sel-div', 2, [vals[0], vals[1]]); clearSelects(['sel-subdiv', 'sel-substn', 'sel-feeder']); }
-    if(level === 'div') { populateSelect('sel-subdiv', 3, [vals[0], vals[1], vals[2]]); clearSelects(['sel-substn', 'sel-feeder']); }
-    if(level === 'subdiv') { populateSelect('sel-substn', 4, [vals[0], vals[1], vals[2], vals[3]]); clearSelects(['sel-feeder']); }
-    if(level === 'substn') { populateSelect('sel-feeder', 5, [vals[0], vals[1], vals[2], vals[3], vals[4]]); }
-  }
+  function handleImage(input, key) { if(input.files[0]) { const reader = new FileReader(); reader.onload = e => payload[key] = e.target.result; reader.readAsDataURL(input.files[0]); } }
+  function populateSelect(id, idx, filters) { const sel = document.getElementById(id); sel.innerHTML = '<option value="">Select...</option>'; if(!masterData.length) return; const filtered = masterData.filter(r => filters.every((v, i) => v === null || r[i] === v)); const unique = [...new Set(filtered.map(r => r[idx]))].sort(); unique.forEach(val => { const opt = document.createElement('option'); opt.value = val; if(idx === 5 && completedFeeders.includes(val)) { opt.innerText = val + " (✅ Done)"; opt.disabled = true; } else opt.innerText = val; sel.appendChild(opt); }); }
+  function filterHierarchy(level) { const vals = ['sel-zone','sel-circle','sel-div','sel-subdiv','sel-substn'].map(id => document.getElementById(id).value || null); if(level === 'zone') { populateSelect('sel-circle', 1, [vals[0]]); clearSelects(['sel-div', 'sel-subdiv', 'sel-substn', 'sel-feeder']); } if(level === 'circle') { populateSelect('sel-div', 2, [vals[0], vals[1]]); clearSelects(['sel-subdiv', 'sel-substn', 'sel-feeder']); } if(level === 'div') { populateSelect('sel-subdiv', 3, [vals[0], vals[1], vals[2]]); clearSelects(['sel-substn', 'sel-feeder']); } if(level === 'subdiv') { populateSelect('sel-substn', 4, [vals[0], vals[1], vals[2], vals[3]]); clearSelects(['sel-feeder']); } if(level === 'substn') { populateSelect('sel-feeder', 5, [vals[0], vals[1], vals[2], vals[3], vals[4]]); } }
   function clearSelects(ids) { ids.forEach(id => document.getElementById(id).innerHTML = '<option value="">Select...</option>'); }
   function showLoader(txt) { document.getElementById('loader').style.display = 'flex'; document.getElementById('loaderText').innerText = txt; }
   function hideLoader() { document.getElementById('loader').style.display = 'none'; }
@@ -491,4 +447,3 @@
 </script>
 </body>
 </html>
-
