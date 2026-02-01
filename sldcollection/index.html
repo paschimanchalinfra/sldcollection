@@ -243,19 +243,16 @@
 
   // --- LOGIC ---
   function calculateScope() {
-    // 1. Total Scope
     let sumScope = 0;
     document.querySelectorAll('.kva-scope-in').forEach(el => sumScope += Number(el.value || 0));
     const ptw = Number(document.getElementById('cap_ptw').value || 0);
     document.getElementById('out-totalScope').value = sumScope;
     document.getElementById('out-notInScope').value = ptw;
 
-    // 2. FIXED BALANCE FORMULA: Total - PTW - Installed
     const installed = Number(document.getElementById('in-installed').value || 0);
     const balance = Math.max(0, sumScope - ptw - installed);
     document.getElementById('out-balanceScope').value = balance;
 
-    // 3. Validate Cable Req <= Balance
     const cableReq = Number(document.getElementById('in-cableReq').value || 0);
     const cableInput = document.getElementById('in-cableReq');
     if (cableReq > balance) {
@@ -266,8 +263,8 @@
         document.getElementById('err-cableReq').innerText = "";
     }
 
-    // 4. Show/Hide Table
     const tableSec = document.getElementById('cableDetailsSection');
+    // If Cable Req > 0 and input is valid, show table and validate it
     if(cableReq > 0 && !cableInput.classList.contains('val-error')) {
         tableSec.style.display = 'block';
         validateTable(); 
@@ -302,7 +299,6 @@
         const totalLen = Number(lenInput.value || 0);
         const avgDisplay = document.getElementById(`avg-${kva}`);
         
-        // Mirror Visual
         document.getElementById(`mirror-${kva}`).value = count;
 
         currentSum += count;
@@ -324,9 +320,10 @@
     document.getElementById('tbl-sum-len').innerText = lenSum;
     
     const errDiv = document.getElementById('tbl-error-msg');
-    if (currentSum > globalLimit) {
-        errDiv.innerText = `Error: Table Count (${currentSum}) exceeds 'Cable Req' (${globalLimit})`;
-        document.querySelectorAll('.cable-dt-count').forEach(i => { if(Number(i.value)>0) i.classList.add('val-error'); });
+    // STRICT VALIDATION: If Global Req > 0, Table Sum must match exactly
+    if (currentSum !== globalLimit) {
+        errDiv.innerText = `Validation Error: Table Total (${currentSum}) must equal Cable Req (${globalLimit})`;
+        document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.add('val-error'));
     } else {
         errDiv.innerText = "";
         document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.remove('val-error'));
@@ -336,15 +333,21 @@
   async function submitForm() {
     const form = document.getElementById('mainForm');
     
-    if(document.querySelector('.val-error')) return alert("Please fix validation errors.");
-    if(document.getElementById('cableDetailsSection').style.display !== 'none') {
-        const globalReq = Number(document.getElementById('in-cableReq').value);
-        const tableSum = Number(document.getElementById('tbl-sum-count').innerText);
-        if(tableSum > globalReq) return alert("Validation Error: Table DT count exceeds Cable Required count.");
-    }
+    // 1. Basic Validations
+    if(document.querySelector('.val-error')) return alert("Please fix validation errors highlighted in red.");
     if(!payload.signoffBase64 || !payload.sldBase64) return alert("Please upload both images.");
 
-    // --- GENERATE SCALABLE DATA ---
+    // 2. Strict Table Validation (Mandatory Check)
+    const globalReq = Number(document.getElementById('in-cableReq').value || 0);
+    let tableSum = 0;
+    document.querySelectorAll('.cable-dt-count').forEach(el => tableSum += Number(el.value || 0));
+
+    if (tableSum !== globalReq) {
+        return alert(`Validation Error:\nYou entered Cable Req = ${globalReq}, but the details table adds up to ${tableSum}.\n\nPlease ensure the "Total DTs" column in the table matches exactly.`);
+    }
+
+    // 3. GENERATE SCALABLE DATA (Fix for Empty Data)
+    // We rebuild the array right here to guarantee it captures the latest state
     const cableDetailsArray = [];
     const cableSummaryArray = [];
 
@@ -355,18 +358,19 @@
             const lenInput = document.querySelector(`.cable-len[data-kva="${kva}"]`);
             const totalLen = Number(lenInput.value || 0);
             
-            // 1. Scalable Object
+            // Build Objects
             cableDetailsArray.push({
                 k: kva,             // Key
                 c: count,           // Count
                 s: CABLE_MAP[kva],  // Size
                 l: totalLen         // Length
             });
-
-            // 2. Readable Summary
             cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`);
         }
     });
+
+    const finalJSON = cableDetailsArray.length ? JSON.stringify(cableDetailsArray) : "[]";
+    const finalSummary = cableSummaryArray.length ? cableSummaryArray.join(" | ") : "None";
 
     const data = {
         action: 'submit',
@@ -383,9 +387,9 @@
         withoutCable: document.getElementById('in-withoutCable').value,
         ptwCount: document.getElementById('cap_ptw').value,
         
-        // --- NEW SCALABLE FIELDS ---
-        cableJSON: JSON.stringify(cableDetailsArray),
-        cableSummary: cableSummaryArray.join(" | ") || "None",
+        // Explicitly attaching the data we just built
+        cableJSON: finalJSON,
+        cableSummary: finalSummary,
         
         signoffBase64: payload.signoffBase64,
         sldBase64: payload.sldBase64
