@@ -292,33 +292,44 @@
 
   // =============== VALIDATION LOGIC ===============
   function calculateScope() {
-    // 1. Total Scope
+    // 1. Calculate Total Scope
+    // This sums up all inputs with class 'kva-scope-in' (includes PTW and all DT capacities)
     let sumScope = 0;
     document.querySelectorAll('.kva-scope-in').forEach(el => sumScope += Number(el.value || 0));
+    
+    // 2. Get Not In Scope (PTW) and Installed
     const ptw = Number(document.getElementById('cap_ptw').value || 0);
+    const installed = Number(document.getElementById('in-installed').value || 0);
+
+    // Update Read-Only Fields
     document.getElementById('out-totalScope').value = sumScope;
     document.getElementById('out-notInScope').value = ptw;
 
-    // 2. Balance
-    const installed = Number(document.getElementById('in-installed').value || 0);
-    const cableReq = Number(document.getElementById('in-cableReq').value || 0);
-    const available = sumScope - installed;
+    // 3. NEW FORMULA: Balance = Total Scope - Not In Scope - Installed
+    // We use Math.max(0, ...) to ensure it never shows a negative number
+    const balance = Math.max(0, sumScope - ptw - installed);
+    document.getElementById('out-balanceScope').value = balance;
 
+    // 4. Validate Cable Req Input
+    // (Ensure Cable Req does not exceed the calculated Balance)
+    const cableReq = Number(document.getElementById('in-cableReq').value || 0);
     const cableInput = document.getElementById('in-cableReq');
-    if (cableReq > available) {
+    
+    // Logic: You cannot require cable for more DTs than exist in the Balance Scope
+    if (cableReq > balance) {
         cableInput.classList.add('val-error');
-        document.getElementById('err-cableReq').innerText = `Max allowed: ${available}`;
+        document.getElementById('err-cableReq').innerText = `Max allowed: ${balance}`;
     } else {
         cableInput.classList.remove('val-error');
         document.getElementById('err-cableReq').innerText = "";
     }
 
-    const balance = Math.max(0, sumScope - installed - cableReq);
-    document.getElementById('out-balanceScope').value = balance;
+    // 5. Validate Without Cable
     validateWithoutCable();
 
-    // Toggle Table
+    // 6. Toggle Table Visibility
     const tableSec = document.getElementById('cableDetailsSection');
+    // Show table if Cable Req > 0 AND it is valid
     if(cableReq > 0 && !cableInput.classList.contains('val-error')) {
         tableSec.style.display = 'block';
         validateTable(); 
@@ -480,3 +491,4 @@
 </script>
 </body>
 </html>
+
