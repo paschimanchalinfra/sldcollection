@@ -202,7 +202,6 @@
     }
   };
 
-  // Section 2: Scope Inputs
   function renderKvaInputs() {
     const container = document.getElementById('kvaInputs');
     KVA_LIST.forEach(k => {
@@ -216,7 +215,6 @@
     });
   }
 
-  // Section 3: Cable Table
   function renderCableTableRows() {
      const tbody = document.getElementById('cableTableBody');
      let html = '';
@@ -264,7 +262,6 @@
     }
 
     const tableSec = document.getElementById('cableDetailsSection');
-    // If Cable Req > 0 and input is valid, show table and validate it
     if(cableReq > 0 && !cableInput.classList.contains('val-error')) {
         tableSec.style.display = 'block';
         validateTable(); 
@@ -320,7 +317,6 @@
     document.getElementById('tbl-sum-len').innerText = lenSum;
     
     const errDiv = document.getElementById('tbl-error-msg');
-    // STRICT VALIDATION: If Global Req > 0, Table Sum must match exactly
     if (currentSum !== globalLimit) {
         errDiv.innerText = `Validation Error: Table Total (${currentSum}) must equal Cable Req (${globalLimit})`;
         document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.add('val-error'));
@@ -333,11 +329,9 @@
   async function submitForm() {
     const form = document.getElementById('mainForm');
     
-    // 1. Basic Validations
-    if(document.querySelector('.val-error')) return alert("Please fix validation errors highlighted in red.");
+    if(document.querySelector('.val-error')) return alert("Please fix validation errors.");
     if(!payload.signoffBase64 || !payload.sldBase64) return alert("Please upload both images.");
 
-    // 2. Strict Table Validation
     const globalReq = Number(document.getElementById('in-cableReq').value || 0);
     let tableSum = 0;
     document.querySelectorAll('.cable-dt-count').forEach(el => tableSum += Number(el.value || 0));
@@ -346,21 +340,18 @@
         return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`);
     }
 
-    // 3. GENERATE JSON PAYLOADS
-    
-    // A. Scope Breakup JSON (New Requirement)
+    // 1. GENERATE SCOPE JSON (FIX FOR EMPTY DATA)
     const scopeArray = [];
     document.querySelectorAll('.kva-scope-in').forEach(input => {
         const val = Number(input.value || 0);
-        // We store all keys even if 0 to maintain full scope structure, or filter >0. 
-        // Storing >0 is cleaner for JSON.
+        // Include if val > 0, or change condition to true to include all zeros
         if (val > 0) {
-            const kvaName = input.name.replace('cap_', ''); // Extract '10', '16'
+            const kvaName = input.name.replace('cap_', '');
             scopeArray.push({ k: kvaName, v: val });
         }
     });
 
-    // B. Cable Details JSON
+    // 2. GENERATE CABLE JSON
     const cableDetailsArray = [];
     const cableSummaryArray = [];
 
@@ -381,7 +372,11 @@
         }
     });
 
-    // 4. PREPARE FINAL DATA OBJECT
+    // Explicitly stringify empty arrays if needed
+    const finalScopeJSON = scopeArray.length > 0 ? JSON.stringify(scopeArray) : "[]";
+    const finalCableJSON = cableDetailsArray.length > 0 ? JSON.stringify(cableDetailsArray) : "[]";
+    const finalSummary = cableSummaryArray.length > 0 ? cableSummaryArray.join(" | ") : "None";
+
     const data = {
         action: 'submit',
         uploaderName: document.getElementById('uploaderName').value,
@@ -397,10 +392,10 @@
         withoutCable: document.getElementById('in-withoutCable').value,
         ptwCount: document.getElementById('cap_ptw').value,
         
-        // --- NEW FIELDS ---
-        scopeJSON: JSON.stringify(scopeArray),          // Column R
-        cableSummary: cableSummaryArray.join(" | ") || "None", // Column S
-        cableJSON: JSON.stringify(cableDetailsArray),   // Column T
+        // PAYLOAD
+        scopeJSON: finalScopeJSON,      
+        cableSummary: finalSummary, 
+        cableJSON: finalCableJSON,   
         
         signoffBase64: payload.signoffBase64,
         sldBase64: payload.sldBase64
@@ -471,4 +466,5 @@
 </script>
 </body>
 </html>
+
 
