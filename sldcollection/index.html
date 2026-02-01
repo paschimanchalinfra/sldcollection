@@ -16,7 +16,6 @@
     .val-error { border-color: var(--error) !important; background-color: #fff8f8; }
     .val-msg { color: var(--error); font-size: 0.7rem; font-weight: 700; display: block; margin-top: 2px; }
 
-    /* Cable Table Styles - Matching Image Structure */
     .cable-table { width: 100%; font-size: 0.75rem; border-collapse: collapse; text-align: center; }
     .cable-table th { background-color: #e3f2fd; color: var(--primary); padding: 8px 4px; border: 1px solid #dee2e6; vertical-align: middle; white-space: normal; }
     .cable-table td { padding: 4px; border: 1px solid #dee2e6; vertical-align: middle; }
@@ -27,7 +26,6 @@
     .hidden-row { display: none; }
     .show-more-btn { font-size: 0.8rem; font-weight: 600; text-decoration: none; cursor: pointer; display: block; margin-top: 10px; text-align: center; }
 
-    /* Overlays */
     .loader-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.98); z-index: 4000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
     .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
     
@@ -218,7 +216,7 @@
     });
   }
 
-  // Section 3: Cable Table (Matching Image Structure)
+  // Section 3: Cable Table
   function renderCableTableRows() {
      const tbody = document.getElementById('cableTableBody');
      let html = '';
@@ -252,7 +250,7 @@
     document.getElementById('out-totalScope').value = sumScope;
     document.getElementById('out-notInScope').value = ptw;
 
-    // 2. Balance = Total - PTW - Installed (Fixed Formula)
+    // 2. FIXED BALANCE FORMULA: Total - PTW - Installed
     const installed = Number(document.getElementById('in-installed').value || 0);
     const balance = Math.max(0, sumScope - ptw - installed);
     document.getElementById('out-balanceScope').value = balance;
@@ -268,7 +266,7 @@
         document.getElementById('err-cableReq').innerText = "";
     }
 
-    // 4. Show Table
+    // 4. Show/Hide Table
     const tableSec = document.getElementById('cableDetailsSection');
     if(cableReq > 0 && !cableInput.classList.contains('val-error')) {
         tableSec.style.display = 'block';
@@ -304,7 +302,7 @@
         const totalLen = Number(lenInput.value || 0);
         const avgDisplay = document.getElementById(`avg-${kva}`);
         
-        // Mirror Logic for "DTs Req Cable"
+        // Mirror Visual
         document.getElementById(`mirror-${kva}`).value = count;
 
         currentSum += count;
@@ -346,6 +344,30 @@
     }
     if(!payload.signoffBase64 || !payload.sldBase64) return alert("Please upload both images.");
 
+    // --- GENERATE SCALABLE DATA ---
+    const cableDetailsArray = [];
+    const cableSummaryArray = [];
+
+    document.querySelectorAll('.cable-dt-count').forEach(input => {
+        const count = Number(input.value || 0);
+        if(count > 0) {
+            const kva = input.getAttribute('data-kva');
+            const lenInput = document.querySelector(`.cable-len[data-kva="${kva}"]`);
+            const totalLen = Number(lenInput.value || 0);
+            
+            // 1. Scalable Object
+            cableDetailsArray.push({
+                k: kva,             // Key
+                c: count,           // Count
+                s: CABLE_MAP[kva],  // Size
+                l: totalLen         // Length
+            });
+
+            // 2. Readable Summary
+            cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`);
+        }
+    });
+
     const data = {
         action: 'submit',
         uploaderName: document.getElementById('uploaderName').value,
@@ -361,26 +383,13 @@
         withoutCable: document.getElementById('in-withoutCable').value,
         ptwCount: document.getElementById('cap_ptw').value,
         
-        cableDetails: {}, 
+        // --- NEW SCALABLE FIELDS ---
+        cableJSON: JSON.stringify(cableDetailsArray),
+        cableSummary: cableSummaryArray.join(" | ") || "None",
+        
         signoffBase64: payload.signoffBase64,
         sldBase64: payload.sldBase64
     };
-    
-    // Add Scope Inputs to Payload (cap_10, cap_16...)
-    KVA_LIST.forEach(k => {
-        const el = document.querySelector(`input[name="cap_${k}"]`);
-        if(el) data[`cap_${k}`] = el.value;
-    });
-
-    // Add Cable Details to Payload
-    document.querySelectorAll('.cable-dt-count').forEach(input => {
-        const kva = input.getAttribute('data-kva');
-        const count = Number(input.value || 0);
-        data.cableDetails[kva] = {
-            count: count,
-            size: CABLE_MAP[kva]
-        };
-    });
 
     showLoader("Submitting...");
     const res = await apiCall(data);
