@@ -369,6 +369,12 @@
 
   async function submitForm() {
     const form = document.getElementById('mainForm');
+
+    // [+] NEW: Validate that all hierarchy dropdowns are selected
+    if (!form.zone.value || !form.circle.value || !form.division.value || 
+        !form.subdiv.value || !form.substation.value || !form.feeder.value) {
+        return alert("Validation Error: Please select all Location Details (Zone through Feeder) before submitting.");
+    }
     
     if(document.querySelector('.val-error')) return alert("Please fix validation errors.");
     if(!payload.signoffBase64 || !payload.sldBase64) return alert("Please upload both images.");
@@ -651,4 +657,5 @@
 </script>
 </body>
 </html>
+
 
