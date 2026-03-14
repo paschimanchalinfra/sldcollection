@@ -33,41 +33,33 @@
     .nav-link-custom { border: none; background: transparent; color: #6c757d; font-weight: 600; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: 0.2s; }
     .nav-link-custom.active { background-color: var(--primary); color: white; }
 
-    /* STATUS STYLES */
     .stat-card { background: white; border-radius: 10px; padding: 15px; border-left: 5px solid var(--primary); margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-    .badge-zone { font-size: 0.7rem; background: #e3f2fd; color: var(--primary); padding: 4px 8px; border-radius: 4px; }
     .accordion-button:not(.collapsed) { background-color: rgba(15, 32, 75, 0.05); color: var(--primary); }
     .drill-table td { padding: 8px 4px; font-size: 0.8rem; }
-    .fade-in { animation: fadeIn 0.3s ease-in; }
-    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-
-    /* ADMIN PANEL STYLES */
+    
     .admin-tools { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 15px; }
     .admin-box { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #ddd; }
     .add-user-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: end; }
     .add-user-grid label { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #555; }
     .add-user-grid input, .add-user-grid select { padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; width: 100%; }
-    
     .search-bar { display: flex; gap: 8px; flex-grow: 1; max-width: 400px; }
     .search-bar input { padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; width: 100%;}
     .btn-small { padding: 6px 12px; font-size: 13px; border-radius: 4px; cursor: pointer; border: 1px solid #ccc; background: #f8f9fa; font-weight:600;}
     .btn-admin-primary { background: var(--primary); color: #fff; border:none; }
-    .btn-reset { background: #fff3e0; color: #e65100; border-color: #ffe0b2; }
-    
     .admin-table-wrap { overflow-x: auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #ddd;}
     .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
     .admin-table th, .admin-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
     .admin-table th { background: #f8f9fa; font-weight: 700; color: var(--primary); position: sticky; top: 0; z-index: 10; }
-    .admin-table tr:hover { background-color: #f8f9fa; }
+    .toggle-status { padding: 4px 8px; border-radius: 4px; font-weight: 600; cursor: pointer; border:none; width: 75px; font-size: 12px;}
+    .st-active { background: #e6f4ea; color: #137333; } .st-inactive { background: #fce8e6; color: #c5221f; }
     
-    .toggle-status { padding: 4px 8px; border-radius: 4px; font-weight: 600; cursor: pointer; text-align: center; border:none; width: 75px; font-size: 12px;}
-    .st-active { background: #e6f4ea; color: #137333; }
-    .st-inactive { background: #fce8e6; color: #c5221f; }
-    .role-select { padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid #ccc; width: 85px;}
+    /* QC Specific Styles */
+    .qc-table th { background-color: #fff3e0; color: #e65100; border-color: #ffe0b2; }
+    .read-only-box { background: #f8f9fa; border: 1px dashed #ced4da; padding: 10px; border-radius: 6px; font-size: 0.85rem; }
+    .btn-qc-view { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: bold; }
     
-    .pagination-ui { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 15px; font-size: 14px; font-weight: 600; }
-    .pagination-ui button { padding: 6px 12px; cursor: pointer; border-radius: 4px; border: 1px solid var(--primary); background: #fff; color: var(--primary); font-weight: bold; }
-    .pagination-ui button:disabled { border-color: #ccc; color: #999; cursor: not-allowed; }
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   </style>
 </head>
 <body>
@@ -92,7 +84,7 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <small class="text-muted">User: <span id="displayUserName" class="fw-bold text-dark" data-role="user"></span></small>
     <div>
-      <button id="btnNavAdmin" class="btn btn-sm btn-outline-primary fw-bold me-2 shadow-sm" style="display:none;" onclick="switchTab('admin')">🛡️ Admin Panel</button>
+      <button id="btnNavAdmin" class="btn btn-sm btn-outline-primary fw-bold me-1 shadow-sm" style="display:none;" onclick="switchTab('admin')">🛡️ Admin</button>
       <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="logout()">Logout</button>
     </div>
   </div>
@@ -128,36 +120,13 @@
       <div class="card-custom">
         <h6 class="section-title">📊 Scope & Status</h6>
         <div class="row g-3">
-          <div class="col-6">
-            <label class="form-label text-muted">Total Scope</label>
-            <input type="number" class="form-control bg-light" id="out-totalScope" value="0" readonly>
-          </div>
-          <div class="col-6">
-            <label class="form-label text-muted">Not In Scope</label>
-            <input type="number" class="form-control bg-light" id="out-notInScope" value="0" readonly>
-          </div>
-
-          <div class="col-6">
-            <label class="form-label text-primary">Installed <span class="text-danger">*</span></label>
-            <input type="number" class="form-control" name="totalInstalled" id="in-installed" oninput="calculateScope()">
-          </div>
-          <div class="col-6">
-            <label class="form-label text-primary">Cable Req (DTs) <span class="text-danger">*</span></label>
-            <input type="number" class="form-control" name="cableReq" id="in-cableReq" oninput="calculateScope()">
-            <div id="err-cableReq" class="val-msg"></div>
-          </div>
-
+          <div class="col-6"><label class="form-label text-muted">Total Scope</label><input type="number" class="form-control bg-light" id="out-totalScope" value="0" readonly></div>
+          <div class="col-6"><label class="form-label text-muted">Not In Scope</label><input type="number" class="form-control bg-light" id="out-notInScope" value="0" readonly></div>
+          <div class="col-6"><label class="form-label text-primary">Installed <span class="text-danger">*</span></label><input type="number" class="form-control" name="totalInstalled" id="in-installed" oninput="calculateScope()"></div>
+          <div class="col-6"><label class="form-label text-primary">Cable Req (DTs) <span class="text-danger">*</span></label><input type="number" class="form-control" name="cableReq" id="in-cableReq" oninput="calculateScope()"><div id="err-cableReq" class="val-msg"></div></div>
           <div class="col-12"><hr class="my-1"></div>
-
-          <div class="col-6">
-            <label class="form-label fw-bold text-success">Balance Scope</label>
-            <input type="number" class="form-control fw-bold text-success bg-light" name="balanceScope" id="out-balanceScope" value="0" readonly>
-          </div>
-          <div class="col-6">
-            <label class="form-label text-primary">Without Cable <span class="text-danger">*</span></label>
-            <input type="number" class="form-control bg-light" name="withoutCable" id="in-withoutCable" readonly>
-            <div id="err-withoutCable" class="val-msg"></div>
-          </div>
+          <div class="col-6"><label class="form-label fw-bold text-success">Balance Scope</label><input type="number" class="form-control fw-bold text-success bg-light" name="balanceScope" id="out-balanceScope" value="0" readonly></div>
+          <div class="col-6"><label class="form-label text-primary">Without Cable <span class="text-danger">*</span></label><input type="number" class="form-control bg-light" name="withoutCable" id="in-withoutCable" readonly><div id="err-withoutCable" class="val-msg"></div></div>
         </div>
 
         <div id="cableDetailsSection" class="mt-4 fade-in" style="display:none;">
@@ -166,32 +135,13 @@
             </div>
             <div class="table-responsive">
                 <table class="cable-table">
-                    <thead>
-                        <tr>
-                            <th style="width:15%">DT (KVA)</th>
-                            <th style="width:20%">TOTAL DTS</th>
-                            <th style="width:20%">REQ CABLE</th>
-                            <th style="width:15%">CABLE SIZE</th>
-                            <th style="width:15%">TOTAL LEN</th>
-                            <th style="width:15%">AVG LEN</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th style="width:15%">DT (KVA)</th><th style="width:20%">TOTAL DTS</th><th style="width:20%">REQ CABLE</th><th style="width:15%">CABLE SIZE</th><th style="width:15%">TOTAL LEN</th><th style="width:15%">AVG LEN</th></tr></thead>
                     <tbody id="cableTableBody"></tbody>
-                    <tfoot class="table-light fw-bold">
-                          <tr>
-                             <td>TOTAL</td>
-                             <td id="tbl-sum-count">0</td>
-                             <td>-</td><td>-</td>
-                             <td id="tbl-sum-len">0</td>
-                             <td>-</td>
-                          </tr>
-                    </tfoot>
+                    <tfoot class="table-light fw-bold"><tr><td>TOTAL</td><td id="tbl-sum-count">0</td><td>-</td><td>-</td><td id="tbl-sum-len">0</td><td>-</td></tr></tfoot>
                 </table>
             </div>
             <div id="tbl-error-msg" class="val-msg text-center mt-2"></div>
-            <div class="text-center">
-                <a class="show-more-btn text-primary" onclick="toggleHighCapacity()"><i class="bi bi-chevron-down"></i> Show more rating</a>
-            </div>
+            <div class="text-center"><a class="show-more-btn text-primary" onclick="toggleHighCapacity()"><i class="bi bi-chevron-down"></i> Show more rating</a></div>
         </div>
       </div>
 
@@ -204,6 +154,96 @@
       <button type="button" class="btn btn-primary w-100 py-3 fw-bold shadow-sm mb-5" onclick="submitForm()">Submit Data</button>
     </form>
   </div>
+
+  <div id="tabQC" style="display:none;" class="fade-in pb-5">
+    
+    <div id="qcListView">
+       <h5 class="mb-3" style="color:#e65100; font-weight:bold;"><i class="bi bi-shield-check"></i> Pending QC Validations</h5>
+       <div class="table-responsive bg-white rounded shadow-sm p-2 border">
+           <table class="table table-hover align-middle qc-table" style="font-size:0.85rem;">
+               <thead class="table-light">
+                   <tr><th>Feeder Info</th><th>Submitted By</th><th>Date</th><th>Action</th></tr>
+               </thead>
+               <tbody id="qcListBody">
+                   <tr><td colspan="4" class="text-center py-4 text-muted">Loading pending requests...</td></tr>
+               </tbody>
+           </table>
+       </div>
+    </div>
+    
+    <div id="qcEditView" style="display:none;">
+       <button class="btn btn-sm btn-secondary mb-3 shadow-sm" onclick="closeQCForm()"><i class="bi bi-arrow-left"></i> Back to List</button>
+       <h5 class="text-primary mb-3 fw-bold">QC Review & Correction Form</h5>
+       
+       <form id="qcForm">
+          <input type="hidden" id="qc-rowIdx">
+          <input type="hidden" id="qc-oldSignUrl">
+          <input type="hidden" id="qc-oldSldUrl">
+          <input type="hidden" id="qc-feederName">
+          
+          <div class="card-custom">
+            <h6 class="section-title">📍 Location Details (Read Only)</h6>
+            <div class="read-only-box" id="qc-location-details"></div>
+          </div>
+
+          <div class="card-custom">
+            <h6 class="section-title">⚡ DT Capacity Breakup (Scope)</h6>
+            <div class="alert alert-warning py-1 small mb-3">Modify scopes if field entry was incorrect.</div>
+            <div class="row g-2" id="qcKvaInputs">
+                <div class="col-4">
+                    <div class="bg-warning-subtle p-2 rounded border border-warning text-center">
+                        <label class="small fw-bold text-danger d-block">PTW</label>
+                        <input type="number" class="form-control text-center p-1 qc-kva-scope-in" id="qc-cap_ptw" name="cap_ptw" value="0" min="0" oninput="qcCalculateScope()">
+                    </div>
+                </div>
+            </div>
+          </div>
+
+          <div class="card-custom">
+            <h6 class="section-title">📊 Scope & Status Correction</h6>
+            <div class="row g-3">
+              <div class="col-6"><label class="form-label text-muted">Total Scope</label><input type="number" class="form-control bg-light" id="qc-out-totalScope" readonly></div>
+              <div class="col-6"><label class="form-label text-muted">Not In Scope</label><input type="number" class="form-control bg-light" id="qc-out-notInScope" readonly></div>
+              
+              <div class="col-6"><label class="form-label text-primary fw-bold">Installed <i class="bi bi-pencil-square"></i></label><input type="number" class="form-control border-primary" id="qc-in-installed" oninput="qcCalculateScope()"></div>
+              <div class="col-6"><label class="form-label text-primary fw-bold">Cable Req <i class="bi bi-pencil-square"></i></label><input type="number" class="form-control border-primary" id="qc-in-cableReq" oninput="qcCalculateScope()"><div id="qc-err-cableReq" class="val-msg"></div></div>
+              
+              <div class="col-12"><hr class="my-1"></div>
+              <div class="col-6"><label class="form-label fw-bold text-success">Balance Scope</label><input type="number" class="form-control fw-bold text-success bg-light" id="qc-out-balanceScope" readonly></div>
+              <div class="col-6"><label class="form-label text-muted">Without Cable</label><input type="number" class="form-control bg-light" id="qc-in-withoutCable" readonly><div id="qc-err-withoutCable" class="val-msg"></div></div>
+            </div>
+
+            <div id="qcCableDetailsSection" class="mt-4 fade-in" style="display:none;">
+                <div class="cable-header p-2 bg-warning bg-opacity-10 border border-warning rounded-top text-center">
+                    <h6 class="m-0 text-warning-emphasis fw-bold small">Correct DT Cable Requirements</h6>
+                </div>
+                <div class="table-responsive">
+                    <table class="cable-table">
+                        <thead><tr><th style="width:15%">DT (KVA)</th><th style="width:20%">TOTAL DTS <i class="bi bi-pencil"></i></th><th style="width:20%">REQ CABLE</th><th style="width:15%">CABLE SIZE</th><th style="width:15%">TOTAL LEN <i class="bi bi-pencil"></i></th><th style="width:15%">AVG LEN</th></tr></thead>
+                        <tbody id="qcCableTableBody"></tbody>
+                        <tfoot class="table-light fw-bold"><tr><td>TOTAL</td><td id="qc-tbl-sum-count">0</td><td>-</td><td>-</td><td id="qc-tbl-sum-len">0</td><td>-</td></tr></tfoot>
+                    </table>
+                </div>
+                <div id="qc-tbl-error-msg" class="val-msg text-center mt-2"></div>
+            </div>
+          </div>
+
+          <div class="card-custom">
+            <h6 class="section-title">📷 Verify & Override Proofs</h6>
+            <div class="row g-3 mb-3">
+              <div class="col-6 text-center"><a id="qc-link-sign" href="#" target="_blank" class="btn btn-sm btn-outline-info w-100">View Current Signoff</a></div>
+              <div class="col-6 text-center"><a id="qc-link-sld" href="#" target="_blank" class="btn btn-sm btn-outline-info w-100">View Current SLD</a></div>
+            </div>
+            <hr>
+            <div class="alert alert-info py-1 small">Only upload files below if the original is incorrect. System will delete the old file automatically.</div>
+            <div class="mb-3"><label class="form-label">Upload Correct Sign-off</label><input type="file" class="form-control form-control-sm" accept="image/*" onchange="handleQCImage(this, 'signoffBase64')"></div>
+            <div class="mb-3"><label class="form-label">Upload Correct SLD</label><input type="file" class="form-control form-control-sm" accept="image/*" onchange="handleQCImage(this, 'sldBase64')"></div>
+          </div>
+
+          <button type="button" class="btn btn-success w-100 py-3 fw-bold shadow-sm mb-5" onclick="submitQCData()"><i class="bi bi-check-circle"></i> APPROVE & FINALIZE</button>
+       </form>
+    </div>
+  </div>
   
   <div id="tabStatus" style="display:none;" class="fade-in pb-5">
     <div class="d-flex justify-content-center mb-3">
@@ -214,15 +254,10 @@
         <label class="btn btn-outline-primary btn-sm fw-bold" for="vUser">User Progress</label>
       </div>
     </div>
-
     <div id="viewPendency">
-      <div class="d-flex justify-content-between align-items-center mb-2 px-2">
-        <h6 class="text-muted fw-bold m-0">Zone Wise Status</h6>
-        <small class="text-muted" style="font-size:0.7rem">Updated: <span id="lastUpdateStats">-</span></small>
-      </div>
+      <div class="d-flex justify-content-between align-items-center mb-2 px-2"><h6 class="text-muted fw-bold m-0">Zone Wise Status</h6><small class="text-muted" style="font-size:0.7rem">Updated: <span id="lastUpdateStats">-</span></small></div>
       <div id="pendencyContainer"></div>
     </div>
-
     <div id="viewUser" style="display:none;">
        <div class="alert alert-info py-2 small mb-3"><i class="bi bi-info-circle"></i> Showing submission stats.</div>
        <div id="userStatsContainer"></div>
@@ -237,12 +272,11 @@
         <div><label>Emp Code</label><input type="text" id="n_code" placeholder="e.g. INTL123"></div>
         <div><label>Mobile No</label><input type="number" id="n_mob" placeholder="10 Digits"></div>
         <div><label>Designation</label><input type="text" id="n_desig" placeholder="Role/Title"></div>
-        <div><label>Role</label><select id="n_role"><option value="User">User</option><option value="Admin">Admin</option></select></div>
+        <div><label>Role</label><select id="n_role"><option value="User">User</option><option value="QC">QC</option><option value="Admin">Admin</option></select></div>
         <div><button class="btn-small btn-admin-primary" style="width:100%; height:38px;" onclick="addNewUser()">Create User</button></div>
       </div>
       <div id="addMsg" class="mt-2 text-danger small fw-bold"></div>
     </div>
-
     <div class="admin-tools">
       <div class="search-bar">
         <input type="text" id="searchInput" placeholder="Search Name or Emp Code..." onkeypress="if(event.key==='Enter') execSearch()">
@@ -251,34 +285,22 @@
       </div>
       <div id="adminMsg" class="text-danger small fw-bold"></div>
     </div>
-
     <div class="admin-table-wrap">
       <table class="admin-table">
-        <thead>
-          <tr>
-            <th>Name / Designation</th>
-            <th>Emp Code</th>
-            <th>Mobile</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="adminTableBody">
-          <tr><td colspan="6" style="text-align:center; padding: 20px;">Loading users...</td></tr>
-        </tbody>
+        <thead><tr><th>Name / Designation</th><th>Emp Code</th><th>Mobile</th><th>Role</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="adminTableBody"><tr><td colspan="6" style="text-align:center; padding: 20px;">Loading users...</td></tr></tbody>
       </table>
     </div>
-    
-    <div class="pagination-ui">
-      <button id="btnPrevPage" onclick="changePage(-1)">&#8592; Prev</button>
-      <span id="pageInfo">Page 1 of 1</span>
-      <button id="btnNextPage" onclick="changePage(1)">Next &#8594;</button>
+    <div class="d-flex justify-content-center align-items-center gap-3 mt-3 font-weight-bold">
+      <button class="btn btn-sm btn-outline-primary" id="btnPrevPage" onclick="changePage(-1)">&#8592; Prev</button>
+      <span id="pageInfo" class="small fw-bold">Page 1 of 1</span>
+      <button class="btn btn-sm btn-outline-primary" id="btnNextPage" onclick="changePage(1)">Next &#8594;</button>
     </div>
   </div>
 
   <div class="nav-tabs-custom" id="bottomNav">
     <button class="nav-link-custom active" id="btnNavForm" onclick="switchTab('form')"><i class="bi bi-ui-checks"></i> Form</button>
+    <button class="nav-link-custom" id="btnNavQC" onclick="switchTab('qc')" style="display:none;"><i class="bi bi-shield-check"></i> QC Panel</button>
     <button class="nav-link-custom" id="btnNavStatus" onclick="switchTab('status')"><i class="bi bi-graph-up-arrow"></i> Status</button>
   </div>
 </div>
@@ -287,61 +309,41 @@
 <script>
   // =============== CONFIG ===============
   const API_URL = 'https://script.google.com/macros/s/AKfycbwCL0qhkMW9EZvDPCWjKcp1mjKr9Y0BmCNAemItqf6ei4-ap-lV2TNsJiIP1082eT0n/exec'; 
-  
-  const CABLE_MAP = {
-    10:35, 16:35, 25:35, 63:70, 100:120, 160:240, 
-    250:400, 315:400, 400:630, 630:1000, 750:1000, 
-    800:1000, 1000:1000, 1200:1000, 1500:1000, 2000:1000
-  };
-  
+  const CABLE_MAP = { 10:35, 16:35, 25:35, 63:70, 100:120, 160:240, 250:400, 315:400, 400:630, 630:1000, 750:1000, 800:1000, 1000:1000, 1200:1000, 1500:1000, 2000:1000 };
   const KVA_LIST = [10,16,25,63,100,160,250,315,400,630,750,800,1000,1200,1500,2000];
-  let masterData = [], completedFeeders = [], payload = { signoffBase64: null, sldBase64: null };
-  let statusLoaded = false;
   
-  // ADMIN STATE
+  let masterData = [], completedFeeders = [], payload = { signoffBase64: null, sldBase64: null };
+  let qcPayload = { signoffBase64: null, sldBase64: null };
+  let statusLoaded = false;
   let adminState = { page: 1, limit: 20, search: '', totalPages: 1 };
+  let qcDataList = [];
 
   window.onload = function() {
-    renderKvaInputs();
-    renderCableTableRows();
+    renderKvaInputs(); renderCableTableRows();
+    renderQCKvaInputs(); renderQCCableTableRows();
     const saved = localStorage.getItem('sld_creds');
     if(saved) {
        const c = JSON.parse(saved);
        document.getElementById('loginEmpCode').value = c.code;
        document.getElementById('loginPass').value = c.pass;
        attemptLogin();
-    } else {
-       document.getElementById('loader').style.display = 'none';
-    }
+    } else document.getElementById('loader').style.display = 'none';
   };
 
-  // --- CORE UI & API FUNCTIONS ---
   async function apiCall(data) {
-    try {
-        const res = await fetch(API_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify(data)
-        });
-        return await res.json();
+    try { const res = await fetch(API_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(data) }); return await res.json();
     } catch (e) { return { status: 'error', message: "Network Error" }; }
   }
 
   async function attemptLogin() {
-    const code = document.getElementById('loginEmpCode').value;
-    const pass = document.getElementById('loginPass').value;
-    
+    const code = document.getElementById('loginEmpCode').value; const pass = document.getElementById('loginPass').value;
     if(!code || !pass) return document.getElementById('loginMsg').innerText = "Please enter credentials.";
     showLoader("Authenticating...");
-    
     const res = await apiCall({ action: 'login', empCode: code, password: pass });
     
     if(res.status === 'success') {
         const userData = res.data;
-        // Save to LocalStorage with role included
         localStorage.setItem('sld_creds', JSON.stringify({code, pass, role: userData.role}));
-        
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         
@@ -352,258 +354,180 @@
         document.getElementById('uploaderName').value = userData.name;
         document.getElementById('activeEmpCode').value = userData.empCode;
         
-        // Show Admin Panel Button if authorized
-        if (userData.role && userData.role.toLowerCase() === 'admin') {
-            document.getElementById('btnNavAdmin').style.display = 'inline-block';
-        }
+        const r = userData.role.toLowerCase();
+        if (r === 'admin') document.getElementById('btnNavAdmin').style.display = 'inline-block';
+        if (r === 'qc' || r === 'admin') document.getElementById('btnNavQC').style.display = 'inline-block';
 
         loadAppData();
     } else {
-        hideLoader();
-        document.getElementById('loginMsg').innerText = res.message || "Failed";
+        hideLoader(); document.getElementById('loginMsg').innerText = res.message || "Failed";
     }
   }
 
   function switchTab(tab) {
     document.querySelectorAll('.nav-link-custom').forEach(b => b.classList.remove('active'));
-    document.getElementById('tabForm').style.display = 'none';
-    document.getElementById('tabStatus').style.display = 'none';
-    document.getElementById('tabAdmin').style.display = 'none';
+    ['tabForm', 'tabStatus', 'tabAdmin', 'tabQC'].forEach(id => document.getElementById(id).style.display = 'none');
     
-    if (tab === 'form') {
-      document.getElementById('tabForm').style.display = 'block';
-      document.getElementById('btnNavForm').classList.add('active');
-    } else if (tab === 'status') {
-      document.getElementById('tabStatus').style.display = 'block';
-      document.getElementById('btnNavStatus').classList.add('active');
-      if(!statusLoaded) loadStatusData();
-    } else if (tab === 'admin') {
-      document.getElementById('tabAdmin').style.display = 'block';
-      fetchAdminData();
-    }
+    if (tab === 'form') { document.getElementById('tabForm').style.display = 'block'; document.getElementById('btnNavForm').classList.add('active'); } 
+    else if (tab === 'status') { document.getElementById('tabStatus').style.display = 'block'; document.getElementById('btnNavStatus').classList.add('active'); if(!statusLoaded) loadStatusData(); } 
+    else if (tab === 'admin') { document.getElementById('tabAdmin').style.display = 'block'; fetchAdminData(); }
+    else if (tab === 'qc') { document.getElementById('tabQC').style.display = 'block'; document.getElementById('btnNavQC').classList.add('active'); closeQCForm(); fetchQCData(); }
   }
 
-  // --- ADMIN PANEL FUNCTIONS ---
-  function fetchAdminData() {
-    document.getElementById('adminMsg').innerText = "Loading users...";
-    const reqCode = document.getElementById('activeEmpCode').value;
-    
-    apiCall({ 
-      action: 'getUsersPaginated', 
-      adminCode: reqCode, 
-      page: adminState.page, 
-      limit: adminState.limit, 
-      search: adminState.search 
-    }).then(res => {
-      if(res.status === 'success') {
-        adminState.totalPages = res.data.totalPages;
-        adminState.page = res.data.currentPage;
-        updatePaginationUI(res.data.totalRecords);
-        renderAdminTable(res.data.users);
-        document.getElementById('adminMsg').innerText = "";
-      } else { 
-        document.getElementById('adminMsg').innerText = res.message; 
-      }
-    });
+  // --- QC WORKFLOW LOGIC [+] NEW ---
+  async function fetchQCData() {
+    showLoader("Fetching Pending Validations...");
+    const res = await apiCall({ action: 'getQCData' });
+    hideLoader();
+    if(res.status === 'success') { qcDataList = res.data; renderQCList(); }
+    else alert("Failed to fetch QC Data.");
   }
 
-  function renderAdminTable(users) {
-    const tbody = document.getElementById('adminTableBody');
+  function renderQCList() {
+    const tbody = document.getElementById('qcListBody');
     tbody.innerHTML = '';
-    if (users.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users found.</td></tr>'; return; }
+    if(qcDataList.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted"><i class="bi bi-check2-all fs-3 d-block"></i> No pending validations.</td></tr>`; return; }
 
-    users.forEach(u => {
-      const isActive = u.status.toLowerCase() === 'active';
-      const statusClass = isActive ? 'st-active' : 'st-inactive';
-      
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="font-weight:600;">${u.name}<br><span style="font-weight:normal;color:#666;font-size:11px;">${u.designation}</span></td>
-        <td style="font-family:monospace;">${u.empCode}</td>
-        <td>${u.mobile || '-'}</td>
-        <td>
-          <select class="role-select" onchange="changeUserRole('${u.empCode}', this.value)">
-            <option value="Admin" ${u.role.toLowerCase()==='admin'?'selected':''}>Admin</option>
-            <option value="User" ${u.role.toLowerCase()==='user'?'selected':''}>User</option>
-          </select>
-        </td>
-        <td>
-          <button class="toggle-status ${statusClass}" onclick="toggleUserStatus('${u.empCode}', '${u.status}', this)">${u.status}</button>
-        </td>
-        <td>
-          <button class="btn-small btn-reset" onclick="resetUserPass('${u.empCode}', '${u.name}')">Reset Pass</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
+    qcDataList.forEach(record => {
+       const tr = document.createElement('tr');
+       const shortDate = new Date(record.date).toLocaleDateString();
+       tr.innerHTML = `
+          <td><strong>${record.feeder}</strong><br><span class="text-muted" style="font-size:0.7rem">${record.division}</span></td>
+          <td style="font-size:0.75rem">${record.uploaderName}<br>${record.uploaderEmpCode}</td>
+          <td style="font-size:0.75rem">${shortDate}</td>
+          <td><button class="btn btn-warning text-dark btn-qc-view shadow-sm" onclick="openQCForm(${record.rowIdx})">Review</button></td>
+       `;
+       tbody.appendChild(tr);
     });
   }
 
-  function updatePaginationUI(total) {
-    document.getElementById('pageInfo').innerText = `Page ${adminState.page} of ${adminState.totalPages} (Total: ${total})`;
-    document.getElementById('btnPrevPage').disabled = adminState.page <= 1;
-    document.getElementById('btnNextPage').disabled = adminState.page >= adminState.totalPages;
+  function openQCForm(rowIdx) {
+     const record = qcDataList.find(r => r.rowIdx === rowIdx);
+     if(!record) return;
+     document.getElementById('qcListView').style.display = 'none';
+     document.getElementById('qcEditView').style.display = 'block';
+     
+     // Set Hidden IDs
+     document.getElementById('qc-rowIdx').value = record.rowIdx;
+     document.getElementById('qc-oldSignUrl').value = record.signUrl;
+     document.getElementById('qc-oldSldUrl').value = record.sldUrl;
+     document.getElementById('qc-feederName').value = record.feeder;
+     qcPayload = { signoffBase64: null, sldBase64: null }; // reset new uploads
+
+     // Location Read Only
+     document.getElementById('qc-location-details').innerHTML = `
+        <strong>Zone:</strong> ${record.zone} &nbsp;|&nbsp; <strong>Circle:</strong> ${record.circle} &nbsp;|&nbsp; <strong>Division:</strong> ${record.division}<br>
+        <strong>SubDiv:</strong> ${record.subdiv} &nbsp;|&nbsp; <strong>Substation:</strong> ${record.substation}<br>
+        <strong class="text-primary mt-1 d-block">Feeder: ${record.feeder}</strong>
+     `;
+
+     // Load Scopes
+     document.querySelectorAll('.qc-kva-scope-in').forEach(i => i.value = '0');
+     document.getElementById('qc-cap_ptw').value = record.ptwCount || 0;
+     try {
+        const scopeArr = JSON.parse(record.scopeJSON || "[]");
+        scopeArr.forEach(item => { const inp = document.getElementById(`qc-cap_${item.k}`); if(inp) inp.value = item.v; });
+     } catch(e){}
+
+     // Load Status
+     document.getElementById('qc-in-installed').value = record.totalInstalled || 0;
+     document.getElementById('qc-in-cableReq').value = record.cableReq || 0;
+     qcCalculateScope(); // Auto-calculates Balance, WithoutCable, Total, NotInScope based on injected data
+
+     // Load Cables
+     document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.value = '');
+     document.querySelectorAll('.qc-cable-len').forEach(i => i.value = '');
+     try {
+        const cableArr = JSON.parse(record.cableJSON || "[]");
+        cableArr.forEach(item => {
+           document.querySelector(`.qc-cable-dt-count[data-kva="${item.k}"]`).value = item.c;
+           document.querySelector(`.qc-cable-len[data-kva="${item.k}"]`).value = item.l;
+        });
+     } catch(e){}
+     qcValidateTable(); // Auto-calculates Sums and Averages
+
+     // Load Links
+     document.getElementById('qc-link-sign').href = record.signUrl;
+     document.getElementById('qc-link-sld').href = record.sldUrl;
   }
 
-  function changePage(delta) {
-    const newPage = adminState.page + delta;
-    if(newPage >= 1 && newPage <= adminState.totalPages) {
-      adminState.page = newPage;
-      fetchAdminData();
-    }
+  function closeQCForm() {
+     document.getElementById('qcEditView').style.display = 'none';
+     document.getElementById('qcListView').style.display = 'block';
   }
 
-  function execSearch() { adminState.search = document.getElementById('searchInput').value.trim(); adminState.page = 1; fetchAdminData(); }
-  function clearSearch() { document.getElementById('searchInput').value = ''; adminState.search = ''; adminState.page = 1; fetchAdminData(); }
-
-  window.addNewUser = function() {
-    const p = {
-      action: 'createUser',
-      adminCode: document.getElementById('activeEmpCode').value,
-      name: document.getElementById('n_name').value.trim(),
-      empCode: document.getElementById('n_code').value.trim().toUpperCase(),
-      mobile: document.getElementById('n_mob').value.trim(),
-      designation: document.getElementById('n_desig').value.trim(),
-      role: document.getElementById('n_role').value
-    };
-    
-    if(!p.name || !p.empCode) return document.getElementById('addMsg').innerText = "Name and Emp Code are required.";
-    document.getElementById('addMsg').innerText = "Creating user...";
-    
-    apiCall(p).then(res => {
-      if(res.status === 'success') {
-        document.getElementById('addMsg').innerText = `Success: User created.`;
-        document.getElementById('addMsg').className = "mt-2 text-success small fw-bold";
-        ['n_name','n_code','n_mob','n_desig'].forEach(id=>document.getElementById(id).value=''); 
-        adminState.page = 1; adminState.search = ''; document.getElementById('searchInput').value = ''; fetchAdminData();
-      } else { 
-        document.getElementById('addMsg').innerText = res.message; 
-        document.getElementById('addMsg').className = "mt-2 text-danger small fw-bold";
-      }
-    });
-  }
-
-  window.toggleUserStatus = function(empCode, currentStatus, btnElement) {
-    const newStatus = currentStatus.toLowerCase() === 'active' ? 'Inactive' : 'Active';
-    btnElement.innerText = '...';
-    apiCall({ 
-      action: 'updateUserStatus', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode, status: newStatus 
-    }).then(res => {
-      if(res.status === 'success') {
-        btnElement.innerText = newStatus; 
-        btnElement.className = `toggle-status ${newStatus==='Active'?'st-active':'st-inactive'}`;
-        btnElement.setAttribute('onclick', `toggleUserStatus('${empCode}', '${newStatus}', this)`);
-      } else { alert("Failed: " + res.message); btnElement.innerText = currentStatus; }
-    });
-  }
-
-  window.changeUserRole = function(empCode, newRole) {
-    apiCall({ 
-      action: 'updateUserRole', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode, role: newRole 
-    }).then(res => {
-      if(res.status !== 'success') alert("Failed to update role: " + res.message);
-    });
-  }
-
-  window.resetUserPass = function(empCode, name) {
-    if(!confirm(`Reset password for ${name} to "Pass@123"?`)) return;
-    apiCall({ 
-      action: 'adminResetPassword', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode 
-    }).then(res => {
-      if(res.status === 'success') alert(`Password for ${name} reset to Pass@123 successfully.`); 
-      else alert("Failed: " + res.message);
-    });
-  }
-
-  // --- EXISTING SLD FORM FUNCTIONS (Untouched Logic) ---
-  function renderKvaInputs() {
-    const container = document.getElementById('kvaInputs');
+  function renderQCKvaInputs() {
+    const container = document.getElementById('qcKvaInputs');
     KVA_LIST.forEach(k => {
         container.innerHTML += `
-        <div class="col-3">
-            <div class="text-center">
-                <label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label>
-                <input type="number" class="form-control text-center p-1 kva-scope-in" name="cap_${k}" value="0" min="0" oninput="calculateScope()">
-            </div>
-        </div>`;
+        <div class="col-3"><div class="text-center">
+            <label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label>
+            <input type="number" class="form-control text-center p-1 qc-kva-scope-in" name="cap_${k}" id="qc-cap_${k}" value="0" min="0" oninput="qcCalculateScope()">
+        </div></div>`;
     });
   }
 
-  function renderCableTableRows() {
-     const tbody = document.getElementById('cableTableBody');
-     let html = '';
+  function renderQCCableTableRows() {
+     const tbody = document.getElementById('qcCableTableBody'); let html = '';
      KVA_LIST.forEach(k => {
          const isHidden = k >= 750 ? 'hidden-row high-cap' : '';
          html += `
          <tr class="bg-white ${isHidden}">
              <td class="fw-bold">${k}</td>
-             <td><input type="number" class="cable-dt-count" data-kva="${k}" placeholder="0" oninput="validateTable()"></td>
-             <td><input type="number" class="cable-dt-mirror" id="mirror-${k}" placeholder="0" readonly style="background:#eee;"></td>
-             <td><input type="text" class="cable-size" value="${CABLE_MAP[k]}" readonly></td>
-             <td><input type="number" class="cable-len" data-kva="${k}" placeholder="0" oninput="validateTable()"></td>
-             <td class="fw-bold small cable-avg" id="avg-${k}">0</td>
+             <td><input type="number" class="qc-cable-dt-count" data-kva="${k}" oninput="qcValidateTable()"></td>
+             <td><input type="number" class="qc-cable-dt-mirror" id="qc-mirror-${k}" readonly style="background:#eee;"></td>
+             <td><input type="text" value="${CABLE_MAP[k]}" readonly style="width:100%; text-align:center; border:none; background:transparent;"></td>
+             <td><input type="number" class="qc-cable-len" data-kva="${k}" oninput="qcValidateTable()"></td>
+             <td class="fw-bold small qc-cable-avg" id="qc-avg-${k}">0</td>
          </tr>`;
      });
      tbody.innerHTML = html;
   }
 
-  function toggleHighCapacity() {
-      document.querySelectorAll('.high-cap').forEach(el => el.classList.toggle('hidden-row'));
-      const btn = document.querySelector('.show-more-btn');
-      btn.innerHTML = btn.innerHTML.includes('Show') ? '<i class="bi bi-chevron-up"></i> Show less rating' : '<i class="bi bi-chevron-down"></i> Show more rating';
-  }
-
-  function calculateScope() {
+  // Exact same math logic duplicated specifically for QC IDs to prevent collision
+  function qcCalculateScope() {
     let sumScope = 0;
-    document.querySelectorAll('.kva-scope-in').forEach(el => sumScope += Number(el.value || 0));
-    const ptw = Number(document.getElementById('cap_ptw').value || 0);
+    document.querySelectorAll('.qc-kva-scope-in').forEach(el => sumScope += Number(el.value || 0));
+    const ptw = Number(document.getElementById('qc-cap_ptw').value || 0);
     
-    document.getElementById('out-totalScope').value = sumScope;
-    document.getElementById('out-notInScope').value = ptw;
+    document.getElementById('qc-out-totalScope').value = sumScope;
+    document.getElementById('qc-out-notInScope').value = ptw;
 
-    const installed = Number(document.getElementById('in-installed').value || 0);
+    const installed = Number(document.getElementById('qc-in-installed').value || 0);
     const balance = Math.max(0, sumScope - ptw - installed);
-    document.getElementById('out-balanceScope').value = balance;
+    document.getElementById('qc-out-balanceScope').value = balance;
 
-    const cableReq = Number(document.getElementById('in-cableReq').value || 0);
-    const cableInput = document.getElementById('in-cableReq');
+    const cableReq = Number(document.getElementById('qc-in-cableReq').value || 0);
+    const cableInput = document.getElementById('qc-in-cableReq');
     
     if (cableReq > balance) {
-        cableInput.classList.add('val-error');
-        document.getElementById('err-cableReq').innerText = `Max allowed: ${balance}`;
+        cableInput.classList.add('val-error'); document.getElementById('qc-err-cableReq').innerText = `Max: ${balance}`;
     } else {
-        cableInput.classList.remove('val-error');
-        document.getElementById('err-cableReq').innerText = "";
+        cableInput.classList.remove('val-error'); document.getElementById('qc-err-cableReq').innerText = "";
     }
 
     const woCable = Math.max(0, balance - cableReq);
-    document.getElementById('in-withoutCable').value = woCable;
+    document.getElementById('qc-in-withoutCable').value = woCable;
 
-    const tableSec = document.getElementById('cableDetailsSection');
-    if(cableReq > 0 && !cableInput.classList.contains('val-error')) {
-        tableSec.style.display = 'block';
-        validateTable(); 
-    } else {
-        tableSec.style.display = 'none';
-    }
+    const tableSec = document.getElementById('qcCableDetailsSection');
+    if(cableReq > 0 && !cableInput.classList.contains('val-error')) { tableSec.style.display = 'block'; qcValidateTable(); } 
+    else tableSec.style.display = 'none';
   }
 
-  function validateTable() {
-    const globalLimit = Number(document.getElementById('in-cableReq').value || 0);
+  function qcValidateTable() {
+    const globalLimit = Number(document.getElementById('qc-in-cableReq').value || 0);
     let currentSum = 0; let lenSum = 0;
 
-    document.querySelectorAll('.cable-dt-count').forEach(input => {
-        const count = Number(input.value || 0);
-        const kva = input.getAttribute('data-kva');
-        const lenInput = document.querySelector(`.cable-len[data-kva="${kva}"]`);
+    document.querySelectorAll('.qc-cable-dt-count').forEach(input => {
+        const count = Number(input.value || 0); const kva = input.getAttribute('data-kva');
+        const lenInput = document.querySelector(`.qc-cable-len[data-kva="${kva}"]`);
         const totalLen = Number(lenInput.value || 0);
-        const avgDisplay = document.getElementById(`avg-${kva}`);
+        const avgDisplay = document.getElementById(`qc-avg-${kva}`);
         
-        document.getElementById(`mirror-${kva}`).value = count;
+        document.getElementById(`qc-mirror-${kva}`).value = count;
         currentSum += count; lenSum += totalLen;
 
-        const maxLen = count * 34;
-        const avg = count > 0 ? (totalLen / count).toFixed(1) : 0;
-        
+        const maxLen = count * 34; const avg = count > 0 ? (totalLen / count).toFixed(1) : 0;
         if (totalLen > maxLen) {
             lenInput.classList.add('val-error');
             avgDisplay.innerHTML = `<span class="text-danger">${avg}</span><div style="font-size:0.6rem; color:red;">Max 34m/DT</div>`;
@@ -613,100 +537,133 @@
         }
     });
 
-    document.getElementById('tbl-sum-count').innerText = currentSum;
-    document.getElementById('tbl-sum-len').innerText = lenSum;
+    document.getElementById('qc-tbl-sum-count').innerText = currentSum;
+    document.getElementById('qc-tbl-sum-len').innerText = lenSum;
     
-    const errDiv = document.getElementById('tbl-error-msg');
+    const errDiv = document.getElementById('qc-tbl-error-msg');
     if (currentSum !== globalLimit) {
-        errDiv.innerText = `Validation Error: Table Total (${currentSum}) must equal Cable Req (${globalLimit})`;
-        document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.add('val-error'));
+        errDiv.innerText = `Validation Error: Total (${currentSum}) must equal Cable Req (${globalLimit})`;
+        document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.classList.add('val-error'));
     } else {
         errDiv.innerText = "";
-        document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.remove('val-error'));
+        document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.classList.remove('val-error'));
     }
+  }
+
+  function handleQCImage(input, key) { 
+      if(input.files[0]) { const reader = new FileReader(); reader.onload = e => qcPayload[key] = e.target.result; reader.readAsDataURL(input.files[0]); } 
+  }
+
+  async function submitQCData() {
+      if(document.querySelector('#qcEditView .val-error')) return alert("Please fix validation errors before approving.");
+      
+      const globalReq = Number(document.getElementById('qc-in-cableReq').value || 0);
+      let tableSum = 0; document.querySelectorAll('.qc-cable-dt-count').forEach(el => tableSum += Number(el.value || 0));
+      if (tableSum !== globalReq) return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`);
+
+      const scopeArray = [];
+      document.querySelectorAll('.qc-kva-scope-in').forEach(input => {
+          const val = Number(input.value || 0);
+          if (val > 0) scopeArray.push({ k: input.name.replace('cap_', ''), v: val });
+      });
+
+      const cableDetailsArray = []; const cableSummaryArray = [];
+      document.querySelectorAll('.qc-cable-dt-count').forEach(input => {
+          const count = Number(input.value || 0);
+          if(count > 0) {
+              const kva = input.getAttribute('data-kva');
+              const totalLen = Number(document.querySelector(`.qc-cable-len[data-kva="${kva}"]`).value || 0);
+              cableDetailsArray.push({ k: kva, c: count, s: CABLE_MAP[kva], l: totalLen });
+              cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`);
+          }
+      });
+
+      const data = {
+          action: 'submitQC',
+          qcName: document.getElementById('displayUserName').innerText,
+          qcCode: document.getElementById('activeEmpCode').value,
+          rowIdx: document.getElementById('qc-rowIdx').value,
+          feeder: document.getElementById('qc-feederName').value,
+          oldSignUrl: document.getElementById('qc-oldSignUrl').value,
+          oldSldUrl: document.getElementById('qc-oldSldUrl').value,
+          
+          totalScope: document.getElementById('qc-out-totalScope').value,
+          totalInstalled: document.getElementById('qc-in-installed').value,
+          balanceScope: document.getElementById('qc-out-balanceScope').value,
+          notInScope: document.getElementById('qc-out-notInScope').value,
+          cableReq: document.getElementById('qc-in-cableReq').value,
+          withoutCable: document.getElementById('qc-in-withoutCable').value,
+          ptwCount: document.getElementById('qc-cap_ptw').value,
+          
+          scopeJSON: scopeArray.length > 0 ? JSON.stringify(scopeArray) : "[]",        
+          cableSummary: cableSummaryArray.length > 0 ? cableSummaryArray.join(" | ") : "None",  
+          cableJSON: cableDetailsArray.length > 0 ? JSON.stringify(cableDetailsArray) : "[]",    
+          
+          signoffBase64: qcPayload.signoffBase64,
+          sldBase64: qcPayload.sldBase64
+      };
+
+      showLoader("Approving & Finalizing...");
+      const res = await apiCall(data);
+      hideLoader();
+      if(res.status === 'success') {
+          alert("Record Successfully Verified and Approved!");
+          fetchQCData(); closeQCForm();
+      } else alert("Error: " + res.message);
+  }
+
+  // --- EXISTING SLD UI HELPERS (Unchanged) ---
+  function calculateScope() {
+    let sumScope = 0; document.querySelectorAll('.kva-scope-in').forEach(el => sumScope += Number(el.value || 0)); const ptw = Number(document.getElementById('cap_ptw').value || 0);
+    document.getElementById('out-totalScope').value = sumScope; document.getElementById('out-notInScope').value = ptw;
+    const installed = Number(document.getElementById('in-installed').value || 0); const balance = Math.max(0, sumScope - ptw - installed); document.getElementById('out-balanceScope').value = balance;
+    const cableReq = Number(document.getElementById('in-cableReq').value || 0); const cableInput = document.getElementById('in-cableReq');
+    if (cableReq > balance) { cableInput.classList.add('val-error'); document.getElementById('err-cableReq').innerText = `Max allowed: ${balance}`; } else { cableInput.classList.remove('val-error'); document.getElementById('err-cableReq').innerText = ""; }
+    const woCable = Math.max(0, balance - cableReq); document.getElementById('in-withoutCable').value = woCable;
+    const tableSec = document.getElementById('cableDetailsSection'); if(cableReq > 0 && !cableInput.classList.contains('val-error')) { tableSec.style.display = 'block'; validateTable(); } else tableSec.style.display = 'none';
+  }
+
+  function validateTable() {
+    const globalLimit = Number(document.getElementById('in-cableReq').value || 0); let currentSum = 0; let lenSum = 0;
+    document.querySelectorAll('.cable-dt-count').forEach(input => {
+        const count = Number(input.value || 0); const kva = input.getAttribute('data-kva'); const lenInput = document.querySelector(`.cable-len[data-kva="${kva}"]`); const totalLen = Number(lenInput.value || 0); const avgDisplay = document.getElementById(`avg-${kva}`);
+        document.getElementById(`mirror-${kva}`).value = count; currentSum += count; lenSum += totalLen;
+        const maxLen = count * 34; const avg = count > 0 ? (totalLen / count).toFixed(1) : 0;
+        if (totalLen > maxLen) { lenInput.classList.add('val-error'); avgDisplay.innerHTML = `<span class="text-danger">${avg}</span><div style="font-size:0.6rem; color:red;">Max 34m/DT</div>`; } else { lenInput.classList.remove('val-error'); avgDisplay.innerHTML = (count > 0 && totalLen > 0) ? `<span class="text-success">${avg}</span>` : "0"; }
+    });
+    document.getElementById('tbl-sum-count').innerText = currentSum; document.getElementById('tbl-sum-len').innerText = lenSum;
+    const errDiv = document.getElementById('tbl-error-msg');
+    if (currentSum !== globalLimit) { errDiv.innerText = `Validation Error: Table Total (${currentSum}) must equal Cable Req (${globalLimit})`; document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.add('val-error')); } else { errDiv.innerText = ""; document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.remove('val-error')); }
   }
 
   async function submitForm() {
     const form = document.getElementById('mainForm');
-
-    if (!form.zone.value || !form.circle.value || !form.division.value || 
-        !form.subdiv.value || !form.substation.value || !form.feeder.value) {
-        return alert("Validation Error: Please select all Location Details (Zone through Feeder) before submitting.");
-    }
-    
+    if (!form.zone.value || !form.circle.value || !form.division.value || !form.subdiv.value || !form.substation.value || !form.feeder.value) return alert("Validation Error: Please select all Location Details.");
     if(document.querySelector('.val-error')) return alert("Please fix validation errors.");
     if(!payload.signoffBase64 || !payload.sldBase64) return alert("Please upload both images.");
 
-    const globalReq = Number(document.getElementById('in-cableReq').value || 0);
-    let tableSum = 0;
-    document.querySelectorAll('.cable-dt-count').forEach(el => tableSum += Number(el.value || 0));
+    const globalReq = Number(document.getElementById('in-cableReq').value || 0); let tableSum = 0; document.querySelectorAll('.cable-dt-count').forEach(el => tableSum += Number(el.value || 0));
+    if (tableSum !== globalReq) return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`);
+    const scopeArray = []; document.querySelectorAll('.kva-scope-in').forEach(input => { const val = Number(input.value || 0); if (val > 0) scopeArray.push({ k: input.name.replace('cap_', ''), v: val }); });
+    const cableDetailsArray = []; const cableSummaryArray = []; document.querySelectorAll('.cable-dt-count').forEach(input => { const count = Number(input.value || 0); if(count > 0) { const kva = input.getAttribute('data-kva'); const totalLen = Number(document.querySelector(`.cable-len[data-kva="${kva}"]`).value || 0); cableDetailsArray.push({ k: kva, c: count, s: CABLE_MAP[kva], l: totalLen }); cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`); } });
 
-    if (tableSum !== globalReq) {
-        return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`);
-    }
-
-    const scopeArray = [];
-    document.querySelectorAll('.kva-scope-in').forEach(input => {
-        const val = Number(input.value || 0);
-        if (val > 0) scopeArray.push({ k: input.name.replace('cap_', ''), v: val });
-    });
-
-    const cableDetailsArray = []; const cableSummaryArray = [];
-    document.querySelectorAll('.cable-dt-count').forEach(input => {
-        const count = Number(input.value || 0);
-        if(count > 0) {
-            const kva = input.getAttribute('data-kva');
-            const totalLen = Number(document.querySelector(`.cable-len[data-kva="${kva}"]`).value || 0);
-            cableDetailsArray.push({ k: kva, c: count, s: CABLE_MAP[kva], l: totalLen });
-            cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`);
-        }
-    });
-
-    const data = {
-        action: 'submit',
-        uploaderName: document.getElementById('uploaderName').value,
-        uploaderEmpCode: document.getElementById('activeEmpCode').value,
-        zone: form.zone.value, circle: form.circle.value, division: form.division.value,
-        subdiv: form.subdiv.value, substation: form.substation.value, feeder: form.feeder.value,
-        totalScope: document.getElementById('out-totalScope').value,
-        totalInstalled: document.getElementById('in-installed').value,
-        balanceScope: document.getElementById('out-balanceScope').value,
-        notInScope: document.getElementById('out-notInScope').value,
-        cableReq: document.getElementById('in-cableReq').value,
-        withoutCable: document.getElementById('in-withoutCable').value,
-        ptwCount: document.getElementById('cap_ptw').value,
-        scopeJSON: scopeArray.length > 0 ? JSON.stringify(scopeArray) : "[]",        
-        cableSummary: cableSummaryArray.length > 0 ? cableSummaryArray.join(" | ") : "None",  
-        cableJSON: cableDetailsArray.length > 0 ? JSON.stringify(cableDetailsArray) : "[]",    
-        signoffBase64: payload.signoffBase64,
-        sldBase64: payload.sldBase64
-    };
-
-    showLoader("Submitting...");
-    const res = await apiCall(data);
-    hideLoader();
-
-    if(res.status === 'success') {
-        alert("Submission Successful!");
-        location.reload();
-    } else {
-        alert("Error: " + res.message);
-    }
+    const data = { action: 'submit', uploaderName: document.getElementById('uploaderName').value, uploaderEmpCode: document.getElementById('activeEmpCode').value, zone: form.zone.value, circle: form.circle.value, division: form.division.value, subdiv: form.subdiv.value, substation: form.substation.value, feeder: form.feeder.value, totalScope: document.getElementById('out-totalScope').value, totalInstalled: document.getElementById('in-installed').value, balanceScope: document.getElementById('out-balanceScope').value, notInScope: document.getElementById('out-notInScope').value, cableReq: document.getElementById('in-cableReq').value, withoutCable: document.getElementById('in-withoutCable').value, ptwCount: document.getElementById('cap_ptw').value, scopeJSON: scopeArray.length > 0 ? JSON.stringify(scopeArray) : "[]", cableSummary: cableSummaryArray.length > 0 ? cableSummaryArray.join(" | ") : "None", cableJSON: cableDetailsArray.length > 0 ? JSON.stringify(cableDetailsArray) : "[]", signoffBase64: payload.signoffBase64, sldBase64: payload.sldBase64 };
+    showLoader("Submitting..."); const res = await apiCall(data); hideLoader(); if(res.status === 'success') { alert("Submission Successful!"); location.reload(); } else alert("Error: " + res.message);
   }
 
-  // --- EXISTING SLD UI HELPERS ---
-  async function loadAppData() {
-    showLoader("Loading Data...");
-    const res = await fetch(API_URL);
-    const json = await res.json();
-    hideLoader();
-    if(json.status === 'success') {
-        masterData = json.data.hierarchy;
-        completedFeeders = json.data.completedFeeders;
-        populateSelect('sel-zone', 0, []);
-    }
-  }
+  // Admin & Generic Handlers
+  function fetchAdminData() { document.getElementById('adminMsg').innerText = "Loading users..."; apiCall({ action: 'getUsersPaginated', adminCode: document.getElementById('activeEmpCode').value, page: adminState.page, limit: adminState.limit, search: adminState.search }).then(res => { if(res.status === 'success') { adminState.totalPages = res.data.totalPages; adminState.page = res.data.currentPage; updatePaginationUI(res.data.totalRecords); renderAdminTable(res.data.users); document.getElementById('adminMsg').innerText = ""; } else document.getElementById('adminMsg').innerText = res.message; }); }
+  function renderAdminTable(users) { const tbody = document.getElementById('adminTableBody'); tbody.innerHTML = ''; if (users.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users found.</td></tr>'; return; } users.forEach(u => { const isActive = u.status.toLowerCase() === 'active'; const statusClass = isActive ? 'st-active' : 'st-inactive'; const tr = document.createElement('tr'); tr.innerHTML = `<td style="font-weight:600;">${u.name}<br><span style="font-weight:normal;color:#666;font-size:11px;">${u.designation}</span></td><td style="font-family:monospace;">${u.empCode}</td><td>${u.mobile || '-'}</td><td><select class="form-select form-select-sm" onchange="changeUserRole('${u.empCode}', this.value)"><option value="Admin" ${u.role.toLowerCase()==='admin'?'selected':''}>Admin</option><option value="QC" ${u.role.toLowerCase()==='qc'?'selected':''}>QC</option><option value="User" ${u.role.toLowerCase()==='user'?'selected':''}>User</option></select></td><td><button class="toggle-status ${statusClass}" onclick="toggleUserStatus('${u.empCode}', '${u.status}', this)">${u.status}</button></td><td><button class="btn-small btn-reset" onclick="resetUserPass('${u.empCode}', '${u.name}')">Reset</button></td>`; tbody.appendChild(tr); }); }
+  function updatePaginationUI(total) { document.getElementById('pageInfo').innerText = `Page ${adminState.page} of ${adminState.totalPages} (Total: ${total})`; document.getElementById('btnPrevPage').disabled = adminState.page <= 1; document.getElementById('btnNextPage').disabled = adminState.page >= adminState.totalPages; }
+  function changePage(delta) { const newPage = adminState.page + delta; if(newPage >= 1 && newPage <= adminState.totalPages) { adminState.page = newPage; fetchAdminData(); } }
+  function execSearch() { adminState.search = document.getElementById('searchInput').value.trim(); adminState.page = 1; fetchAdminData(); }
+  function clearSearch() { document.getElementById('searchInput').value = ''; adminState.search = ''; adminState.page = 1; fetchAdminData(); }
+  window.addNewUser = function() { const p = { action: 'createUser', adminCode: document.getElementById('activeEmpCode').value, name: document.getElementById('n_name').value.trim(), empCode: document.getElementById('n_code').value.trim().toUpperCase(), mobile: document.getElementById('n_mob').value.trim(), designation: document.getElementById('n_desig').value.trim(), role: document.getElementById('n_role').value }; if(!p.name || !p.empCode) return document.getElementById('addMsg').innerText = "Name and Emp Code required."; document.getElementById('addMsg').innerText = "Creating user..."; apiCall(p).then(res => { if(res.status === 'success') { document.getElementById('addMsg').innerText = "Success: User created."; document.getElementById('addMsg').className = "mt-2 text-success small fw-bold"; ['n_name','n_code','n_mob','n_desig'].forEach(id=>document.getElementById(id).value=''); adminState.page = 1; adminState.search = ''; document.getElementById('searchInput').value = ''; fetchAdminData(); } else { document.getElementById('addMsg').innerText = res.message; document.getElementById('addMsg').className = "mt-2 text-danger small fw-bold"; } }); }
+  window.toggleUserStatus = function(empCode, currentStatus, btnElement) { const newStatus = currentStatus.toLowerCase() === 'active' ? 'Inactive' : 'Active'; btnElement.innerText = '...'; apiCall({ action: 'updateUserStatus', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode, status: newStatus }).then(res => { if(res.status === 'success') { btnElement.innerText = newStatus; btnElement.className = `toggle-status ${newStatus==='Active'?'st-active':'st-inactive'}`; btnElement.setAttribute('onclick', `toggleUserStatus('${empCode}', '${newStatus}', this)`); } else { alert("Failed: " + res.message); btnElement.innerText = currentStatus; } }); }
+  window.changeUserRole = function(empCode, newRole) { apiCall({ action: 'updateUserRole', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode, role: newRole }).then(res => { if(res.status !== 'success') alert("Failed: " + res.message); }); }
+  window.resetUserPass = function(empCode, name) { if(!confirm(`Reset password for ${name} to "Pass@123"?`)) return; apiCall({ action: 'adminResetPassword', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode }).then(res => { if(res.status === 'success') alert(`Password for ${name} reset successfully.`); else alert("Failed: " + res.message); }); }
 
+  async function loadAppData() { showLoader("Loading Data..."); const res = await fetch(API_URL); const json = await res.json(); hideLoader(); if(json.status === 'success') { masterData = json.data.hierarchy; completedFeeders = json.data.completedFeeders; populateSelect('sel-zone', 0, []); } }
   function handleImage(input, key) { if(input.files[0]) { const reader = new FileReader(); reader.onload = e => payload[key] = e.target.result; reader.readAsDataURL(input.files[0]); } }
   function populateSelect(id, idx, filters) { const sel = document.getElementById(id); sel.innerHTML = '<option value="">Select...</option>'; if(!masterData.length) return; const filtered = masterData.filter(r => filters.every((v, i) => v === null || r[i] === v)); const unique = [...new Set(filtered.map(r => r[idx]))].sort(); unique.forEach(val => { const opt = document.createElement('option'); opt.value = val; if(idx === 5 && completedFeeders.includes(val)) { opt.innerText = val + " (✅ Done)"; opt.disabled = true; } else opt.innerText = val; sel.appendChild(opt); }); }
   function filterHierarchy(level) { const vals = ['sel-zone','sel-circle','sel-div','sel-subdiv','sel-substn'].map(id => document.getElementById(id).value || null); if(level === 'zone') { populateSelect('sel-circle', 1, [vals[0]]); clearSelects(['sel-div', 'sel-subdiv', 'sel-substn', 'sel-feeder']); } if(level === 'circle') { populateSelect('sel-div', 2, [vals[0], vals[1]]); clearSelects(['sel-subdiv', 'sel-substn', 'sel-feeder']); } if(level === 'div') { populateSelect('sel-subdiv', 3, [vals[0], vals[1], vals[2]]); clearSelects(['sel-substn', 'sel-feeder']); } if(level === 'subdiv') { populateSelect('sel-substn', 4, [vals[0], vals[1], vals[2], vals[3]]); clearSelects(['sel-feeder']); } if(level === 'substn') { populateSelect('sel-feeder', 5, [vals[0], vals[1], vals[2], vals[3], vals[4]]); } }
@@ -715,86 +672,11 @@
   function hideLoader() { document.getElementById('loader').style.display = 'none'; }
   function logout() { localStorage.removeItem('sld_creds'); location.reload(); }
 
-  // --- EXISTING STATUS DASHBOARD ---
-  function toggleStatView(view) {
-    document.getElementById('viewPendency').style.display = view === 'pendency' ? 'block' : 'none';
-    document.getElementById('viewUser').style.display = view === 'user' ? 'block' : 'none';
-  }
-
-  async function loadStatusData() {
-    showLoader("Fetching Analytics...");
-    const role = document.getElementById('displayUserName').getAttribute('data-role');
-    const res = await apiCall({ action: 'getStatus', empCode: document.getElementById('activeEmpCode').value, role: role });
-    hideLoader();
-    if (res.status === 'success') {
-      renderPendency(res.data.pendency);
-      renderUserProgress(res.data.userStats);
-      document.getElementById('lastUpdateStats').innerText = res.data.lastUpdate;
-      statusLoaded = true;
-    } else alert("Failed to load stats");
-  }
-
-  function renderPendency(data) {
-    const container = document.getElementById('pendencyContainer');
-    if (!data || data.length === 0) { container.innerHTML = '<div class="text-center mt-5 text-muted">No Data Available</div>'; return; }
-    let html = '<div class="accordion" id="accStatus">';
-    data.forEach((zone, idx) => {
-      const colorClass = getProgColor(zone.pct);
-      const isExpanded = idx === 0 ? 'show' : ''; 
-      const btnCollapsed = idx === 0 ? '' : 'collapsed';
-      html += `
-        <div class="accordion-item border-0 shadow-sm mb-2" style="border-radius:8px; overflow:hidden;">
-          <h2 class="accordion-header">
-            <button class="accordion-button ${btnCollapsed} py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}">
-              <div class="w-100">
-                <div class="d-flex justify-content-between mb-1">
-                  <span class="fw-bold">${zone.zone}</span><span class="fw-bold text-${colorClass}">${zone.pct}%</span>
-                </div>
-                <div class="progress" style="height: 6px;">
-                  <div class="progress-bar bg-${colorClass}" style="width: ${zone.pct}%"></div>
-                </div>
-                <div class="d-flex justify-content-between mt-1 small text-muted">
-                  <span>Done: ${zone.done}/${zone.total}</span><span>Pending: ${zone.pending}</span>
-                </div>
-              </div>
-            </button>
-          </h2>
-          <div id="collapse${idx}" class="accordion-collapse collapse ${isExpanded}" data-bs-parent="#accStatus">
-            <div class="accordion-body bg-light p-2">
-               <table class="table table-sm table-borderless drill-table m-0">
-                 <thead><tr class="text-muted border-bottom"><th>Division</th><th class="text-end">Done</th><th class="text-end">Gap</th><th class="text-end">%</th></tr></thead>
-                 <tbody>
-                    ${zone.divisions.map(d => `<tr><td>${d.name}</td><td class="text-end fw-bold text-dark">${d.done}</td><td class="text-end text-danger">${d.pending}</td><td class="text-end"><span class="badge bg-${getProgColor(d.pct)}">${d.pct}%</span></td></tr>`).join('')}
-                 </tbody>
-               </table>
-            </div>
-          </div>
-        </div>`;
-    });
-    container.innerHTML = html + '</div>';
-  }
-
-  function renderUserProgress(users) {
-    const container = document.getElementById('userStatsContainer');
-    if (!users || users.length === 0) { container.innerHTML = '<div class="text-center mt-4">No submissions found.</div>'; return; }
-    let html = '';
-    users.forEach(u => {
-      html += `
-        <div class="stat-card">
-           <div class="d-flex justify-content-between">
-              <div><h6 class="fw-bold mb-0">${u.name}</h6><span class="text-muted small">${u.code}</span></div>
-              <div class="text-end"><h3 class="fw-bold text-primary mb-0">${u.total}</h3><small class="text-muted" style="font-size:0.65rem">TOTAL SUBMITS</small></div>
-           </div>
-           <hr class="my-2 opacity-25">
-           <div class="row text-center" style="font-size:0.8rem;">
-              <div class="col-4 border-end"><div class="fw-bold text-success">${u.today}</div><div class="text-muted small">Today</div></div>
-              <div class="col-8"><div class="text-truncate text-dark fw-bold">${u.zones}</div><div class="text-muted small">Active Zones</div></div>
-           </div>
-           <div class="mt-2 text-center bg-light rounded py-1"><small class="text-muted" style="font-size:0.7rem">Last Active: ${u.lastActiveStr}</small></div>
-        </div>`;
-    });
-    container.innerHTML = html;
-  }
+  // Status Dashboard Methods
+  function toggleStatView(view) { document.getElementById('viewPendency').style.display = view === 'pendency' ? 'block' : 'none'; document.getElementById('viewUser').style.display = view === 'user' ? 'block' : 'none'; }
+  async function loadStatusData() { showLoader("Fetching Analytics..."); const role = document.getElementById('displayUserName').getAttribute('data-role'); const res = await apiCall({ action: 'getStatus', empCode: document.getElementById('activeEmpCode').value, role: role }); hideLoader(); if (res.status === 'success') { renderPendency(res.data.pendency); renderUserProgress(res.data.userStats); document.getElementById('lastUpdateStats').innerText = res.data.lastUpdate; statusLoaded = true; } else alert("Failed to load stats"); }
+  function renderPendency(data) { const container = document.getElementById('pendencyContainer'); if (!data || data.length === 0) { container.innerHTML = '<div class="text-center mt-5 text-muted">No Data Available</div>'; return; } let html = '<div class="accordion" id="accStatus">'; data.forEach((zone, idx) => { const colorClass = getProgColor(zone.pct); const isExpanded = idx === 0 ? 'show' : ''; const btnCollapsed = idx === 0 ? '' : 'collapsed'; html += `<div class="accordion-item border-0 shadow-sm mb-2" style="border-radius:8px; overflow:hidden;"><h2 class="accordion-header"><button class="accordion-button ${btnCollapsed} py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}"><div class="w-100"><div class="d-flex justify-content-between mb-1"><span class="fw-bold">${zone.zone}</span><span class="fw-bold text-${colorClass}">${zone.pct}%</span></div><div class="progress" style="height: 6px;"><div class="progress-bar bg-${colorClass}" style="width: ${zone.pct}%"></div></div><div class="d-flex justify-content-between mt-1 small text-muted"><span>Done: ${zone.done}/${zone.total}</span><span>Pending: ${zone.pending}</span></div></div></button></h2><div id="collapse${idx}" class="accordion-collapse collapse ${isExpanded}" data-bs-parent="#accStatus"><div class="accordion-body bg-light p-2"><table class="table table-sm table-borderless drill-table m-0"><thead><tr class="text-muted border-bottom"><th>Division</th><th class="text-end">Done</th><th class="text-end">Gap</th><th class="text-end">%</th></tr></thead><tbody>${zone.divisions.map(d => `<tr><td>${d.name}</td><td class="text-end fw-bold text-dark">${d.done}</td><td class="text-end text-danger">${d.pending}</td><td class="text-end"><span class="badge bg-${getProgColor(d.pct)}">${d.pct}%</span></td></tr>`).join('')}</tbody></table></div></div></div>`; }); container.innerHTML = html + '</div>'; }
+  function renderUserProgress(users) { const container = document.getElementById('userStatsContainer'); if (!users || users.length === 0) { container.innerHTML = '<div class="text-center mt-4">No submissions found.</div>'; return; } let html = ''; users.forEach(u => { html += `<div class="stat-card"><div class="d-flex justify-content-between"><div><h6 class="fw-bold mb-0">${u.name}</h6><span class="text-muted small">${u.code}</span></div><div class="text-end"><h3 class="fw-bold text-primary mb-0">${u.total}</h3><small class="text-muted" style="font-size:0.65rem">TOTAL SUBMITS</small></div></div><hr class="my-2 opacity-25"><div class="row text-center" style="font-size:0.8rem;"><div class="col-4 border-end"><div class="fw-bold text-success">${u.today}</div><div class="text-muted small">Today</div></div><div class="col-8"><div class="text-truncate text-dark fw-bold">${u.zones}</div><div class="text-muted small">Active Zones</div></div></div><div class="mt-2 text-center bg-light rounded py-1"><small class="text-muted" style="font-size:0.7rem">Last Active: ${u.lastActiveStr}</small></div></div>`; }); container.innerHTML = html; }
   function getProgColor(pct) { if (pct >= 100) return 'success'; if (pct >= 50) return 'warning'; return 'danger'; }
 </script>
 </body>
