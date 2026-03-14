@@ -317,16 +317,24 @@
   let statusLoaded = false;
   let adminState = { page: 1, limit: 20, search: '', totalPages: 1 };
   let qcDataList = [];
-
-  // ==========================================
-  // GLOBAL IMAGE UPLOAD HANDLERS (BUG FIX)
-  // ==========================================
   
+  // ==========================================
+  // GLOBAL IMAGE UPLOAD HANDLER
+  // ==========================================
   function handleImage(input, key) { 
-      if(input.files && input.files[0]) { 
+      // Ensure a file was actually selected by the user
+      if (input.files && input.files[0]) { 
+          const file = input.files[0];
           const reader = new FileReader(); 
-          reader.onload = function(e) { payload[key] = e.target.result; }; 
-          reader.readAsDataURL(input.files[0]); 
+          
+          // Define the callback for when the file is fully read
+          reader.onload = function(e) { 
+              // Store the Base64 string in the global payload object
+              payload[key] = e.target.result; 
+          }; 
+          
+          // Read the file asynchronously as a Base64 Data URL
+          reader.readAsDataURL(file); 
       } 
   }
 
