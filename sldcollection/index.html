@@ -53,7 +53,6 @@
     .toggle-status { padding: 4px 8px; border-radius: 4px; font-weight: 600; cursor: pointer; border:none; width: 75px; font-size: 12px;}
     .st-active { background: #e6f4ea; color: #137333; } .st-inactive { background: #fce8e6; color: #c5221f; }
     
-    /* QC Specific Styles */
     .qc-table th { background-color: #fff3e0; color: #e65100; border-color: #ffe0b2; }
     .read-only-box { background: #f8f9fa; border: 1px dashed #ced4da; padding: 10px; border-radius: 6px; font-size: 0.85rem; }
     .btn-qc-view { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: bold; }
@@ -83,13 +82,10 @@
   
   <div class="d-flex justify-content-between align-items-center mb-3">
     <small class="text-muted">User: <span id="displayUserName" class="fw-bold text-dark" data-role="user"></span></small>
-    <div>
-      <button id="btnNavAdmin" class="btn btn-sm btn-outline-primary fw-bold me-1 shadow-sm" style="display:none;" onclick="switchTab('admin')">🛡️ Admin</button>
-      <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="logout()">Logout</button>
-    </div>
+    <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="logout()">Logout</button>
   </div>
 
-  <div id="tabForm">
+  <div id="tabForm" style="display:none;">
     <form id="mainForm">
       <input type="hidden" id="activeEmpCode"><input type="hidden" id="uploaderName" name="uploaderName">
       
@@ -159,14 +155,18 @@
     
     <div id="qcListView">
        <h5 class="mb-3" style="color:#e65100; font-weight:bold;"><i class="bi bi-shield-check"></i> Pending QC Validations</h5>
+       
+       <div class="row g-2 mb-3 bg-white p-2 rounded shadow-sm border mx-0">
+           <div class="col-6 col-md-3"><select id="qc-filter-zone" class="form-select form-select-sm" onchange="qcFilterChanged('zone')"><option value="">All Zones</option></select></div>
+           <div class="col-6 col-md-3"><select id="qc-filter-circle" class="form-select form-select-sm" onchange="qcFilterChanged('circle')"><option value="">All Circles</option></select></div>
+           <div class="col-6 col-md-3"><select id="qc-filter-div" class="form-select form-select-sm" onchange="qcFilterChanged('div')"><option value="">All Divisions</option></select></div>
+           <div class="col-6 col-md-3"><select id="qc-filter-subdiv" class="form-select form-select-sm" onchange="qcFilterChanged('subdiv')"><option value="">All Sub Divs</option></select></div>
+       </div>
+
        <div class="table-responsive bg-white rounded shadow-sm p-2 border">
            <table class="table table-hover align-middle qc-table" style="font-size:0.85rem;">
-               <thead class="table-light">
-                   <tr><th>Feeder Info</th><th>Submitted By</th><th>Date</th><th>Action</th></tr>
-               </thead>
-               <tbody id="qcListBody">
-                   <tr><td colspan="4" class="text-center py-4 text-muted">Loading pending requests...</td></tr>
-               </tbody>
+               <thead class="table-light"><tr><th>Feeder Info</th><th>Submitted By</th><th>Date</th><th>Action</th></tr></thead>
+               <tbody id="qcListBody"><tr><td colspan="4" class="text-center py-4 text-muted">Loading pending requests...</td></tr></tbody>
            </table>
        </div>
     </div>
@@ -298,9 +298,8 @@
     </div>
   </div>
 
-  <div class="nav-tabs-custom" id="bottomNav">
+  <div class="nav-tabs-custom" id="bottomNav" style="display:none;">
     <button class="nav-link-custom active" id="btnNavForm" onclick="switchTab('form')"><i class="bi bi-ui-checks"></i> Form</button>
-    <button class="nav-link-custom" id="btnNavQC" onclick="switchTab('qc')" style="display:none;"><i class="bi bi-shield-check"></i> QC Panel</button>
     <button class="nav-link-custom" id="btnNavStatus" onclick="switchTab('status')"><i class="bi bi-graph-up-arrow"></i> Status</button>
   </div>
 </div>
@@ -330,57 +329,12 @@
     } else document.getElementById('loader').style.display = 'none';
   };
 
-  // --- RESTORED DOM RENDERING FUNCTIONS ---
-  
-  function renderKvaInputs() {
-    const container = document.getElementById('kvaInputs');
-    if (!container) return;
-    let html = '';
-    KVA_LIST.forEach(k => {
-        html += `
-        <div class="col-3">
-            <div class="text-center">
-                <label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label>
-                <input type="number" class="form-control text-center p-1 kva-scope-in" name="cap_${k}" id="cap_${k}" value="0" min="0" oninput="calculateScope()">
-            </div>
-        </div>`;
-    });
-    // Append to the existing PTW box
-    container.innerHTML += html;
-  }
-
-  function renderCableTableRows() {
-     const tbody = document.getElementById('cableTableBody');
-     if (!tbody) return;
-     let html = '';
-     KVA_LIST.forEach(k => {
-         const isHidden = k >= 750 ? 'hidden-row high-cap' : '';
-         html += `
-         <tr class="bg-white ${isHidden}">
-             <td class="fw-bold">${k}</td>
-             <td><input type="number" class="cable-dt-count" data-kva="${k}" placeholder="0" oninput="validateTable()"></td>
-             <td><input type="number" class="cable-dt-mirror" id="mirror-${k}" placeholder="0" readonly style="background:#eee;"></td>
-             <td><input type="text" class="cable-size" value="${CABLE_MAP[k]}" readonly style="width:100%; text-align:center; border:none; background:transparent;"></td>
-             <td><input type="number" class="cable-len" data-kva="${k}" placeholder="0" oninput="validateTable()"></td>
-             <td class="fw-bold small cable-avg" id="avg-${k}">0</td>
-         </tr>`;
-     });
-     tbody.innerHTML = html;
-  }
-
-  function toggleHighCapacity() {
-      document.querySelectorAll('.high-cap').forEach(el => el.classList.toggle('hidden-row'));
-      const btn = document.querySelector('.show-more-btn');
-      if (btn) {
-          btn.innerHTML = btn.innerHTML.includes('Show') ? '<i class="bi bi-chevron-up"></i> Show less rating' : '<i class="bi bi-chevron-down"></i> Show more rating';
-      }
-  }
-
   async function apiCall(data) {
     try { const res = await fetch(API_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(data) }); return await res.json();
     } catch (e) { return { status: 'error', message: "Network Error" }; }
   }
 
+  // --- STRICT FRONTEND ROLE-BASED LOGIN LOGIC ---
   async function attemptLogin() {
     const code = document.getElementById('loginEmpCode').value; const pass = document.getElementById('loginPass').value;
     if(!code || !pass) return document.getElementById('loginMsg').innerText = "Please enter credentials.";
@@ -401,8 +355,18 @@
         document.getElementById('activeEmpCode').value = userData.empCode;
         
         const r = userData.role.toLowerCase();
-        if (r === 'admin') document.getElementById('btnNavAdmin').style.display = 'inline-block';
-        if (r === 'qc' || r === 'admin') document.getElementById('btnNavQC').style.display = 'inline-block';
+        
+        // Lock UI Based on Role
+        document.getElementById('bottomNav').style.display = 'none'; 
+
+        if (r === 'admin') {
+            switchTab('admin');
+        } else if (r === 'qc') {
+            switchTab('qc');
+        } else {
+            document.getElementById('bottomNav').style.display = 'flex';
+            switchTab('form');
+        }
 
         loadAppData();
     } else {
@@ -417,24 +381,68 @@
     if (tab === 'form') { document.getElementById('tabForm').style.display = 'block'; document.getElementById('btnNavForm').classList.add('active'); } 
     else if (tab === 'status') { document.getElementById('tabStatus').style.display = 'block'; document.getElementById('btnNavStatus').classList.add('active'); if(!statusLoaded) loadStatusData(); } 
     else if (tab === 'admin') { document.getElementById('tabAdmin').style.display = 'block'; fetchAdminData(); }
-    else if (tab === 'qc') { document.getElementById('tabQC').style.display = 'block'; document.getElementById('btnNavQC').classList.add('active'); closeQCForm(); fetchQCData(); }
+    else if (tab === 'qc') { document.getElementById('tabQC').style.display = 'block'; closeQCForm(); fetchQCData(); }
   }
 
-  // --- QC WORKFLOW LOGIC [+] NEW ---
+  // --- QC WORKFLOW & FILTERING LOGIC ---
   async function fetchQCData() {
     showLoader("Fetching Pending Validations...");
-    const res = await apiCall({ action: 'getQCData' });
+    const res = await apiCall({ action: 'getQCData', empCode: document.getElementById('activeEmpCode').value });
     hideLoader();
-    if(res.status === 'success') { qcDataList = res.data; renderQCList(); }
-    else alert("Failed to fetch QC Data.");
+    if(res.status === 'success') { qcDataList = res.data; applyQCFilters(); }
+    else alert("Failed to fetch QC Data. Unauthorized.");
   }
 
-  function renderQCList() {
+  // 1. QC Dynamic Filters
+  function qcFilterChanged(level) {
+      const z = document.getElementById('qc-filter-zone').value;
+      const c = document.getElementById('qc-filter-circle').value;
+      const d = document.getElementById('qc-filter-div').value;
+      
+      if(level === 'zone') {
+          populateQCSelect('qc-filter-circle', 1, [z]);
+          clearQCSelects(['qc-filter-div', 'qc-filter-subdiv']);
+      } else if(level === 'circle') {
+          populateQCSelect('qc-filter-div', 2, [z, c]);
+          clearQCSelects(['qc-filter-subdiv']);
+      } else if(level === 'div') {
+          populateQCSelect('qc-filter-subdiv', 3, [z, c, d]);
+      }
+      applyQCFilters();
+  }
+
+  function populateQCSelect(id, idx, filters) {
+      const sel = document.getElementById(id); const firstOpt = sel.options[0].text;
+      sel.innerHTML = `<option value="">${firstOpt}</option>`;
+      if(!masterData.length) return;
+      const filtered = masterData.filter(r => filters.every((v, i) => !v || r[i] === v));
+      const unique = [...new Set(filtered.map(r => r[idx]))].sort();
+      unique.forEach(val => { if(val) sel.innerHTML += `<option value="${val}">${val}</option>`; });
+  }
+
+  function clearQCSelects(ids) {
+      ids.forEach(id => { const sel = document.getElementById(id); sel.innerHTML = `<option value="">${sel.options[0].text}</option>`; });
+  }
+
+  // 2. Apply Filters in Real-Time
+  function applyQCFilters() {
+      const z = document.getElementById('qc-filter-zone').value;
+      const c = document.getElementById('qc-filter-circle').value;
+      const d = document.getElementById('qc-filter-div').value;
+      const sd = document.getElementById('qc-filter-subdiv').value;
+
+      const filteredData = qcDataList.filter(r => {
+          return (!z || r.zone === z) && (!c || r.circle === c) && (!d || r.division === d) && (!sd || r.subdiv === sd);
+      });
+      renderQCList(filteredData);
+  }
+
+  function renderQCList(dataToRender = qcDataList) {
     const tbody = document.getElementById('qcListBody');
     tbody.innerHTML = '';
-    if(qcDataList.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted"><i class="bi bi-check2-all fs-3 d-block"></i> No pending validations.</td></tr>`; return; }
+    if(dataToRender.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted"><i class="bi bi-check2-all fs-3 d-block"></i> No pending validations for this selection.</td></tr>`; return; }
 
-    qcDataList.forEach(record => {
+    dataToRender.forEach(record => {
        const tr = document.createElement('tr');
        const shortDate = new Date(record.date).toLocaleDateString();
        tr.innerHTML = `
@@ -453,34 +461,26 @@
      document.getElementById('qcListView').style.display = 'none';
      document.getElementById('qcEditView').style.display = 'block';
      
-     // Set Hidden IDs
      document.getElementById('qc-rowIdx').value = record.rowIdx;
      document.getElementById('qc-oldSignUrl').value = record.signUrl;
      document.getElementById('qc-oldSldUrl').value = record.sldUrl;
      document.getElementById('qc-feederName').value = record.feeder;
-     qcPayload = { signoffBase64: null, sldBase64: null }; // reset new uploads
+     qcPayload = { signoffBase64: null, sldBase64: null };
 
-     // Location Read Only
      document.getElementById('qc-location-details').innerHTML = `
         <strong>Zone:</strong> ${record.zone} &nbsp;|&nbsp; <strong>Circle:</strong> ${record.circle} &nbsp;|&nbsp; <strong>Division:</strong> ${record.division}<br>
         <strong>SubDiv:</strong> ${record.subdiv} &nbsp;|&nbsp; <strong>Substation:</strong> ${record.substation}<br>
         <strong class="text-primary mt-1 d-block">Feeder: ${record.feeder}</strong>
      `;
 
-     // Load Scopes
      document.querySelectorAll('.qc-kva-scope-in').forEach(i => i.value = '0');
      document.getElementById('qc-cap_ptw').value = record.ptwCount || 0;
-     try {
-        const scopeArr = JSON.parse(record.scopeJSON || "[]");
-        scopeArr.forEach(item => { const inp = document.getElementById(`qc-cap_${item.k}`); if(inp) inp.value = item.v; });
-     } catch(e){}
+     try { const scopeArr = JSON.parse(record.scopeJSON || "[]"); scopeArr.forEach(item => { const inp = document.getElementById(`qc-cap_${item.k}`); if(inp) inp.value = item.v; }); } catch(e){}
 
-     // Load Status
      document.getElementById('qc-in-installed').value = record.totalInstalled || 0;
      document.getElementById('qc-in-cableReq').value = record.cableReq || 0;
-     qcCalculateScope(); // Auto-calculates Balance, WithoutCable, Total, NotInScope based on injected data
+     qcCalculateScope();
 
-     // Load Cables
      document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.value = '');
      document.querySelectorAll('.qc-cable-len').forEach(i => i.value = '');
      try {
@@ -490,9 +490,8 @@
            document.querySelector(`.qc-cable-len[data-kva="${item.k}"]`).value = item.l;
         });
      } catch(e){}
-     qcValidateTable(); // Auto-calculates Sums and Averages
+     qcValidateTable();
 
-     // Load Links
      document.getElementById('qc-link-sign').href = record.signUrl;
      document.getElementById('qc-link-sld').href = record.sldUrl;
   }
@@ -503,162 +502,81 @@
   }
 
   function renderQCKvaInputs() {
-    const container = document.getElementById('qcKvaInputs');
-    KVA_LIST.forEach(k => {
-        container.innerHTML += `
-        <div class="col-3"><div class="text-center">
-            <label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label>
-            <input type="number" class="form-control text-center p-1 qc-kva-scope-in" name="cap_${k}" id="qc-cap_${k}" value="0" min="0" oninput="qcCalculateScope()">
-        </div></div>`;
-    });
+    const container = document.getElementById('qcKvaInputs'); if (!container) return; let html = '';
+    KVA_LIST.forEach(k => { html += `<div class="col-3"><div class="text-center"><label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label><input type="number" class="form-control text-center p-1 qc-kva-scope-in" name="cap_${k}" id="qc-cap_${k}" value="0" min="0" oninput="qcCalculateScope()"></div></div>`; });
+    container.innerHTML += html;
   }
 
   function renderQCCableTableRows() {
-     const tbody = document.getElementById('qcCableTableBody'); let html = '';
+     const tbody = document.getElementById('qcCableTableBody'); if (!tbody) return; let html = '';
      KVA_LIST.forEach(k => {
          const isHidden = k >= 750 ? 'hidden-row high-cap' : '';
-         html += `
-         <tr class="bg-white ${isHidden}">
-             <td class="fw-bold">${k}</td>
-             <td><input type="number" class="qc-cable-dt-count" data-kva="${k}" oninput="qcValidateTable()"></td>
-             <td><input type="number" class="qc-cable-dt-mirror" id="qc-mirror-${k}" readonly style="background:#eee;"></td>
-             <td><input type="text" value="${CABLE_MAP[k]}" readonly style="width:100%; text-align:center; border:none; background:transparent;"></td>
-             <td><input type="number" class="qc-cable-len" data-kva="${k}" oninput="qcValidateTable()"></td>
-             <td class="fw-bold small qc-cable-avg" id="qc-avg-${k}">0</td>
-         </tr>`;
+         html += `<tr class="bg-white ${isHidden}"><td class="fw-bold">${k}</td><td><input type="number" class="qc-cable-dt-count" data-kva="${k}" oninput="qcValidateTable()"></td><td><input type="number" class="qc-cable-dt-mirror" id="qc-mirror-${k}" readonly style="background:#eee;"></td><td><input type="text" value="${CABLE_MAP[k]}" readonly style="width:100%; text-align:center; border:none; background:transparent;"></td><td><input type="number" class="qc-cable-len" data-kva="${k}" oninput="qcValidateTable()"></td><td class="fw-bold small qc-cable-avg" id="qc-avg-${k}">0</td></tr>`;
      });
      tbody.innerHTML = html;
   }
 
-  // Exact same math logic duplicated specifically for QC IDs to prevent collision
   function qcCalculateScope() {
-    let sumScope = 0;
-    document.querySelectorAll('.qc-kva-scope-in').forEach(el => sumScope += Number(el.value || 0));
-    const ptw = Number(document.getElementById('qc-cap_ptw').value || 0);
-    
-    document.getElementById('qc-out-totalScope').value = sumScope;
-    document.getElementById('qc-out-notInScope').value = ptw;
-
-    const installed = Number(document.getElementById('qc-in-installed').value || 0);
-    const balance = Math.max(0, sumScope - ptw - installed);
-    document.getElementById('qc-out-balanceScope').value = balance;
-
-    const cableReq = Number(document.getElementById('qc-in-cableReq').value || 0);
-    const cableInput = document.getElementById('qc-in-cableReq');
-    
-    if (cableReq > balance) {
-        cableInput.classList.add('val-error'); document.getElementById('qc-err-cableReq').innerText = `Max: ${balance}`;
-    } else {
-        cableInput.classList.remove('val-error'); document.getElementById('qc-err-cableReq').innerText = "";
-    }
-
-    const woCable = Math.max(0, balance - cableReq);
-    document.getElementById('qc-in-withoutCable').value = woCable;
-
-    const tableSec = document.getElementById('qcCableDetailsSection');
-    if(cableReq > 0 && !cableInput.classList.contains('val-error')) { tableSec.style.display = 'block'; qcValidateTable(); } 
-    else tableSec.style.display = 'none';
+    let sumScope = 0; document.querySelectorAll('.qc-kva-scope-in').forEach(el => sumScope += Number(el.value || 0)); const ptw = Number(document.getElementById('qc-cap_ptw').value || 0);
+    document.getElementById('qc-out-totalScope').value = sumScope; document.getElementById('qc-out-notInScope').value = ptw;
+    const installed = Number(document.getElementById('qc-in-installed').value || 0); const balance = Math.max(0, sumScope - ptw - installed); document.getElementById('qc-out-balanceScope').value = balance;
+    const cableReq = Number(document.getElementById('qc-in-cableReq').value || 0); const cableInput = document.getElementById('qc-in-cableReq');
+    if (cableReq > balance) { cableInput.classList.add('val-error'); document.getElementById('qc-err-cableReq').innerText = `Max: ${balance}`; } else { cableInput.classList.remove('val-error'); document.getElementById('qc-err-cableReq').innerText = ""; }
+    const woCable = Math.max(0, balance - cableReq); document.getElementById('qc-in-withoutCable').value = woCable;
+    const tableSec = document.getElementById('qcCableDetailsSection'); if(cableReq > 0 && !cableInput.classList.contains('val-error')) { tableSec.style.display = 'block'; qcValidateTable(); } else tableSec.style.display = 'none';
   }
 
   function qcValidateTable() {
-    const globalLimit = Number(document.getElementById('qc-in-cableReq').value || 0);
-    let currentSum = 0; let lenSum = 0;
-
+    const globalLimit = Number(document.getElementById('qc-in-cableReq').value || 0); let currentSum = 0; let lenSum = 0;
     document.querySelectorAll('.qc-cable-dt-count').forEach(input => {
-        const count = Number(input.value || 0); const kva = input.getAttribute('data-kva');
-        const lenInput = document.querySelector(`.qc-cable-len[data-kva="${kva}"]`);
-        const totalLen = Number(lenInput.value || 0);
-        const avgDisplay = document.getElementById(`qc-avg-${kva}`);
-        
-        document.getElementById(`qc-mirror-${kva}`).value = count;
-        currentSum += count; lenSum += totalLen;
-
+        const count = Number(input.value || 0); const kva = input.getAttribute('data-kva'); const lenInput = document.querySelector(`.qc-cable-len[data-kva="${kva}"]`); const totalLen = Number(lenInput.value || 0); const avgDisplay = document.getElementById(`qc-avg-${kva}`);
+        document.getElementById(`qc-mirror-${kva}`).value = count; currentSum += count; lenSum += totalLen;
         const maxLen = count * 34; const avg = count > 0 ? (totalLen / count).toFixed(1) : 0;
-        if (totalLen > maxLen) {
-            lenInput.classList.add('val-error');
-            avgDisplay.innerHTML = `<span class="text-danger">${avg}</span><div style="font-size:0.6rem; color:red;">Max 34m/DT</div>`;
-        } else {
-            lenInput.classList.remove('val-error');
-            avgDisplay.innerHTML = (count > 0 && totalLen > 0) ? `<span class="text-success">${avg}</span>` : "0";
-        }
+        if (totalLen > maxLen) { lenInput.classList.add('val-error'); avgDisplay.innerHTML = `<span class="text-danger">${avg}</span><div style="font-size:0.6rem; color:red;">Max 34m/DT</div>`; } else { lenInput.classList.remove('val-error'); avgDisplay.innerHTML = (count > 0 && totalLen > 0) ? `<span class="text-success">${avg}</span>` : "0"; }
     });
-
-    document.getElementById('qc-tbl-sum-count').innerText = currentSum;
-    document.getElementById('qc-tbl-sum-len').innerText = lenSum;
-    
+    document.getElementById('qc-tbl-sum-count').innerText = currentSum; document.getElementById('qc-tbl-sum-len').innerText = lenSum;
     const errDiv = document.getElementById('qc-tbl-error-msg');
-    if (currentSum !== globalLimit) {
-        errDiv.innerText = `Validation Error: Total (${currentSum}) must equal Cable Req (${globalLimit})`;
-        document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.classList.add('val-error'));
-    } else {
-        errDiv.innerText = "";
-        document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.classList.remove('val-error'));
-    }
+    if (currentSum !== globalLimit) { errDiv.innerText = `Validation Error: Total (${currentSum}) must equal Cable Req (${globalLimit})`; document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.classList.add('val-error')); } else { errDiv.innerText = ""; document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.classList.remove('val-error')); }
   }
 
-  function handleQCImage(input, key) { 
-      if(input.files[0]) { const reader = new FileReader(); reader.onload = e => qcPayload[key] = e.target.result; reader.readAsDataURL(input.files[0]); } 
-  }
+  function handleQCImage(input, key) { if(input.files[0]) { const reader = new FileReader(); reader.onload = e => qcPayload[key] = e.target.result; reader.readAsDataURL(input.files[0]); } }
 
   async function submitQCData() {
       if(document.querySelector('#qcEditView .val-error')) return alert("Please fix validation errors before approving.");
-      
-      const globalReq = Number(document.getElementById('qc-in-cableReq').value || 0);
-      let tableSum = 0; document.querySelectorAll('.qc-cable-dt-count').forEach(el => tableSum += Number(el.value || 0));
+      const globalReq = Number(document.getElementById('qc-in-cableReq').value || 0); let tableSum = 0; document.querySelectorAll('.qc-cable-dt-count').forEach(el => tableSum += Number(el.value || 0));
       if (tableSum !== globalReq) return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`);
-
-      const scopeArray = [];
-      document.querySelectorAll('.qc-kva-scope-in').forEach(input => {
-          const val = Number(input.value || 0);
-          if (val > 0) scopeArray.push({ k: input.name.replace('cap_', ''), v: val });
-      });
-
-      const cableDetailsArray = []; const cableSummaryArray = [];
-      document.querySelectorAll('.qc-cable-dt-count').forEach(input => {
-          const count = Number(input.value || 0);
-          if(count > 0) {
-              const kva = input.getAttribute('data-kva');
-              const totalLen = Number(document.querySelector(`.qc-cable-len[data-kva="${kva}"]`).value || 0);
-              cableDetailsArray.push({ k: kva, c: count, s: CABLE_MAP[kva], l: totalLen });
-              cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`);
-          }
-      });
+      const scopeArray = []; document.querySelectorAll('.qc-kva-scope-in').forEach(input => { const val = Number(input.value || 0); if (val > 0) scopeArray.push({ k: input.name.replace('cap_', ''), v: val }); });
+      const cableDetailsArray = []; const cableSummaryArray = []; document.querySelectorAll('.qc-cable-dt-count').forEach(input => { const count = Number(input.value || 0); if(count > 0) { const kva = input.getAttribute('data-kva'); const totalLen = Number(document.querySelector(`.qc-cable-len[data-kva="${kva}"]`).value || 0); cableDetailsArray.push({ k: kva, c: count, s: CABLE_MAP[kva], l: totalLen }); cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`); } });
 
       const data = {
-          action: 'submitQC',
-          qcName: document.getElementById('displayUserName').innerText,
-          qcCode: document.getElementById('activeEmpCode').value,
-          rowIdx: document.getElementById('qc-rowIdx').value,
-          feeder: document.getElementById('qc-feederName').value,
-          oldSignUrl: document.getElementById('qc-oldSignUrl').value,
-          oldSldUrl: document.getElementById('qc-oldSldUrl').value,
-          
-          totalScope: document.getElementById('qc-out-totalScope').value,
-          totalInstalled: document.getElementById('qc-in-installed').value,
-          balanceScope: document.getElementById('qc-out-balanceScope').value,
-          notInScope: document.getElementById('qc-out-notInScope').value,
-          cableReq: document.getElementById('qc-in-cableReq').value,
-          withoutCable: document.getElementById('qc-in-withoutCable').value,
-          ptwCount: document.getElementById('qc-cap_ptw').value,
-          
-          scopeJSON: scopeArray.length > 0 ? JSON.stringify(scopeArray) : "[]",        
-          cableSummary: cableSummaryArray.length > 0 ? cableSummaryArray.join(" | ") : "None",  
-          cableJSON: cableDetailsArray.length > 0 ? JSON.stringify(cableDetailsArray) : "[]",    
-          
-          signoffBase64: qcPayload.signoffBase64,
-          sldBase64: qcPayload.sldBase64
+          action: 'submitQC', qcName: document.getElementById('displayUserName').innerText, qcCode: document.getElementById('activeEmpCode').value,
+          rowIdx: document.getElementById('qc-rowIdx').value, feeder: document.getElementById('qc-feederName').value, oldSignUrl: document.getElementById('qc-oldSignUrl').value, oldSldUrl: document.getElementById('qc-oldSldUrl').value,
+          totalScope: document.getElementById('qc-out-totalScope').value, totalInstalled: document.getElementById('qc-in-installed').value, balanceScope: document.getElementById('qc-out-balanceScope').value, notInScope: document.getElementById('qc-out-notInScope').value, cableReq: document.getElementById('qc-in-cableReq').value, withoutCable: document.getElementById('qc-in-withoutCable').value, ptwCount: document.getElementById('qc-cap_ptw').value,
+          scopeJSON: scopeArray.length > 0 ? JSON.stringify(scopeArray) : "[]", cableSummary: cableSummaryArray.length > 0 ? cableSummaryArray.join(" | ") : "None", cableJSON: cableDetailsArray.length > 0 ? JSON.stringify(cableDetailsArray) : "[]", signoffBase64: qcPayload.signoffBase64, sldBase64: qcPayload.sldBase64
       };
-
-      showLoader("Approving & Finalizing...");
-      const res = await apiCall(data);
-      hideLoader();
-      if(res.status === 'success') {
-          alert("Record Successfully Verified and Approved!");
-          fetchQCData(); closeQCForm();
-      } else alert("Error: " + res.message);
+      showLoader("Approving & Finalizing..."); const res = await apiCall(data); hideLoader();
+      if(res.status === 'success') { alert("Record Successfully Verified and Approved!"); fetchQCData(); closeQCForm(); } else alert("Error: " + res.message);
   }
 
-  // --- EXISTING SLD UI HELPERS (Unchanged) ---
+  // --- EXISTING SLD DOM RENDERERS (User View) ---
+  function renderKvaInputs() {
+    const container = document.getElementById('kvaInputs'); if (!container) return; let html = '';
+    KVA_LIST.forEach(k => { html += `<div class="col-3"><div class="text-center"><label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label><input type="number" class="form-control text-center p-1 kva-scope-in" name="cap_${k}" id="cap_${k}" value="0" min="0" oninput="calculateScope()"></div></div>`; });
+    container.innerHTML += html;
+  }
+
+  function renderCableTableRows() {
+     const tbody = document.getElementById('cableTableBody'); if (!tbody) return; let html = '';
+     KVA_LIST.forEach(k => {
+         const isHidden = k >= 750 ? 'hidden-row high-cap' : '';
+         html += `<tr class="bg-white ${isHidden}"><td class="fw-bold">${k}</td><td><input type="number" class="cable-dt-count" data-kva="${k}" placeholder="0" oninput="validateTable()"></td><td><input type="number" class="cable-dt-mirror" id="mirror-${k}" placeholder="0" readonly style="background:#eee;"></td><td><input type="text" class="cable-size" value="${CABLE_MAP[k]}" readonly style="width:100%; text-align:center; border:none; background:transparent;"></td><td><input type="number" class="cable-len" data-kva="${k}" placeholder="0" oninput="validateTable()"></td><td class="fw-bold small cable-avg" id="avg-${k}">0</td></tr>`;
+     });
+     tbody.innerHTML = html;
+  }
+
+  function toggleHighCapacity() { document.querySelectorAll('.high-cap').forEach(el => el.classList.toggle('hidden-row')); const btn = document.querySelector('.show-more-btn'); if (btn) { btn.innerHTML = btn.innerHTML.includes('Show') ? '<i class="bi bi-chevron-up"></i> Show less rating' : '<i class="bi bi-chevron-down"></i> Show more rating'; } }
+
+  // --- EXISTING FORM PROCESSING (User View) ---
   function calculateScope() {
     let sumScope = 0; document.querySelectorAll('.kva-scope-in').forEach(el => sumScope += Number(el.value || 0)); const ptw = Number(document.getElementById('cap_ptw').value || 0);
     document.getElementById('out-totalScope').value = sumScope; document.getElementById('out-notInScope').value = ptw;
@@ -697,7 +615,7 @@
     showLoader("Submitting..."); const res = await apiCall(data); hideLoader(); if(res.status === 'success') { alert("Submission Successful!"); location.reload(); } else alert("Error: " + res.message);
   }
 
-  // Admin & Generic Handlers
+  // --- ADMIN HANDLERS ---
   function fetchAdminData() { document.getElementById('adminMsg').innerText = "Loading users..."; apiCall({ action: 'getUsersPaginated', adminCode: document.getElementById('activeEmpCode').value, page: adminState.page, limit: adminState.limit, search: adminState.search }).then(res => { if(res.status === 'success') { adminState.totalPages = res.data.totalPages; adminState.page = res.data.currentPage; updatePaginationUI(res.data.totalRecords); renderAdminTable(res.data.users); document.getElementById('adminMsg').innerText = ""; } else document.getElementById('adminMsg').innerText = res.message; }); }
   function renderAdminTable(users) { const tbody = document.getElementById('adminTableBody'); tbody.innerHTML = ''; if (users.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users found.</td></tr>'; return; } users.forEach(u => { const isActive = u.status.toLowerCase() === 'active'; const statusClass = isActive ? 'st-active' : 'st-inactive'; const tr = document.createElement('tr'); tr.innerHTML = `<td style="font-weight:600;">${u.name}<br><span style="font-weight:normal;color:#666;font-size:11px;">${u.designation}</span></td><td style="font-family:monospace;">${u.empCode}</td><td>${u.mobile || '-'}</td><td><select class="form-select form-select-sm" onchange="changeUserRole('${u.empCode}', this.value)"><option value="Admin" ${u.role.toLowerCase()==='admin'?'selected':''}>Admin</option><option value="QC" ${u.role.toLowerCase()==='qc'?'selected':''}>QC</option><option value="User" ${u.role.toLowerCase()==='user'?'selected':''}>User</option></select></td><td><button class="toggle-status ${statusClass}" onclick="toggleUserStatus('${u.empCode}', '${u.status}', this)">${u.status}</button></td><td><button class="btn-small btn-reset" onclick="resetUserPass('${u.empCode}', '${u.name}')">Reset</button></td>`; tbody.appendChild(tr); }); }
   function updatePaginationUI(total) { document.getElementById('pageInfo').innerText = `Page ${adminState.page} of ${adminState.totalPages} (Total: ${total})`; document.getElementById('btnPrevPage').disabled = adminState.page <= 1; document.getElementById('btnNextPage').disabled = adminState.page >= adminState.totalPages; }
@@ -709,7 +627,15 @@
   window.changeUserRole = function(empCode, newRole) { apiCall({ action: 'updateUserRole', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode, role: newRole }).then(res => { if(res.status !== 'success') alert("Failed: " + res.message); }); }
   window.resetUserPass = function(empCode, name) { if(!confirm(`Reset password for ${name} to "Pass@123"?`)) return; apiCall({ action: 'adminResetPassword', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode }).then(res => { if(res.status === 'success') alert(`Password for ${name} reset successfully.`); else alert("Failed: " + res.message); }); }
 
-  async function loadAppData() { showLoader("Loading Data..."); const res = await fetch(API_URL); const json = await res.json(); hideLoader(); if(json.status === 'success') { masterData = json.data.hierarchy; completedFeeders = json.data.completedFeeders; populateSelect('sel-zone', 0, []); } }
+  // --- GENERIC HELPERS ---
+  async function loadAppData() { 
+      showLoader("Loading Data..."); const res = await fetch(API_URL); const json = await res.json(); hideLoader(); 
+      if(json.status === 'success') { 
+          masterData = json.data.hierarchy; completedFeeders = json.data.completedFeeders; populateSelect('sel-zone', 0, []); 
+          const role = document.getElementById('displayUserName').getAttribute('data-role');
+          if(role === 'qc' || role === 'admin') populateQCSelect('qc-filter-zone', 0, []);
+      } 
+  }
   function handleImage(input, key) { if(input.files[0]) { const reader = new FileReader(); reader.onload = e => payload[key] = e.target.result; reader.readAsDataURL(input.files[0]); } }
   function populateSelect(id, idx, filters) { const sel = document.getElementById(id); sel.innerHTML = '<option value="">Select...</option>'; if(!masterData.length) return; const filtered = masterData.filter(r => filters.every((v, i) => v === null || r[i] === v)); const unique = [...new Set(filtered.map(r => r[idx]))].sort(); unique.forEach(val => { const opt = document.createElement('option'); opt.value = val; if(idx === 5 && completedFeeders.includes(val)) { opt.innerText = val + " (✅ Done)"; opt.disabled = true; } else opt.innerText = val; sel.appendChild(opt); }); }
   function filterHierarchy(level) { const vals = ['sel-zone','sel-circle','sel-div','sel-subdiv','sel-substn'].map(id => document.getElementById(id).value || null); if(level === 'zone') { populateSelect('sel-circle', 1, [vals[0]]); clearSelects(['sel-div', 'sel-subdiv', 'sel-substn', 'sel-feeder']); } if(level === 'circle') { populateSelect('sel-div', 2, [vals[0], vals[1]]); clearSelects(['sel-subdiv', 'sel-substn', 'sel-feeder']); } if(level === 'div') { populateSelect('sel-subdiv', 3, [vals[0], vals[1], vals[2]]); clearSelects(['sel-substn', 'sel-feeder']); } if(level === 'subdiv') { populateSelect('sel-substn', 4, [vals[0], vals[1], vals[2], vals[3]]); clearSelects(['sel-feeder']); } if(level === 'substn') { populateSelect('sel-feeder', 5, [vals[0], vals[1], vals[2], vals[3], vals[4]]); } }
@@ -718,7 +644,7 @@
   function hideLoader() { document.getElementById('loader').style.display = 'none'; }
   function logout() { localStorage.removeItem('sld_creds'); location.reload(); }
 
-  // Status Dashboard Methods
+  // --- STATUS DASHBOARD (User Only) ---
   function toggleStatView(view) { document.getElementById('viewPendency').style.display = view === 'pendency' ? 'block' : 'none'; document.getElementById('viewUser').style.display = view === 'user' ? 'block' : 'none'; }
   async function loadStatusData() { showLoader("Fetching Analytics..."); const role = document.getElementById('displayUserName').getAttribute('data-role'); const res = await apiCall({ action: 'getStatus', empCode: document.getElementById('activeEmpCode').value, role: role }); hideLoader(); if (res.status === 'success') { renderPendency(res.data.pendency); renderUserProgress(res.data.userStats); document.getElementById('lastUpdateStats').innerText = res.data.lastUpdate; statusLoaded = true; } else alert("Failed to load stats"); }
   function renderPendency(data) { const container = document.getElementById('pendencyContainer'); if (!data || data.length === 0) { container.innerHTML = '<div class="text-center mt-5 text-muted">No Data Available</div>'; return; } let html = '<div class="accordion" id="accStatus">'; data.forEach((zone, idx) => { const colorClass = getProgColor(zone.pct); const isExpanded = idx === 0 ? 'show' : ''; const btnCollapsed = idx === 0 ? '' : 'collapsed'; html += `<div class="accordion-item border-0 shadow-sm mb-2" style="border-radius:8px; overflow:hidden;"><h2 class="accordion-header"><button class="accordion-button ${btnCollapsed} py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}"><div class="w-100"><div class="d-flex justify-content-between mb-1"><span class="fw-bold">${zone.zone}</span><span class="fw-bold text-${colorClass}">${zone.pct}%</span></div><div class="progress" style="height: 6px;"><div class="progress-bar bg-${colorClass}" style="width: ${zone.pct}%"></div></div><div class="d-flex justify-content-between mt-1 small text-muted"><span>Done: ${zone.done}/${zone.total}</span><span>Pending: ${zone.pending}</span></div></div></button></h2><div id="collapse${idx}" class="accordion-collapse collapse ${isExpanded}" data-bs-parent="#accStatus"><div class="accordion-body bg-light p-2"><table class="table table-sm table-borderless drill-table m-0"><thead><tr class="text-muted border-bottom"><th>Division</th><th class="text-end">Done</th><th class="text-end">Gap</th><th class="text-end">%</th></tr></thead><tbody>${zone.divisions.map(d => `<tr><td>${d.name}</td><td class="text-end fw-bold text-dark">${d.done}</td><td class="text-end text-danger">${d.pending}</td><td class="text-end"><span class="badge bg-${getProgColor(d.pct)}">${d.pct}%</span></td></tr>`).join('')}</tbody></table></div></div></div>`; }); container.innerHTML = html + '</div>'; }
