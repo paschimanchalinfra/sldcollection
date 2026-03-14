@@ -330,6 +330,52 @@
     } else document.getElementById('loader').style.display = 'none';
   };
 
+  // --- RESTORED DOM RENDERING FUNCTIONS ---
+  
+  function renderKvaInputs() {
+    const container = document.getElementById('kvaInputs');
+    if (!container) return;
+    let html = '';
+    KVA_LIST.forEach(k => {
+        html += `
+        <div class="col-3">
+            <div class="text-center">
+                <label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label>
+                <input type="number" class="form-control text-center p-1 kva-scope-in" name="cap_${k}" id="cap_${k}" value="0" min="0" oninput="calculateScope()">
+            </div>
+        </div>`;
+    });
+    // Append to the existing PTW box
+    container.innerHTML += html;
+  }
+
+  function renderCableTableRows() {
+     const tbody = document.getElementById('cableTableBody');
+     if (!tbody) return;
+     let html = '';
+     KVA_LIST.forEach(k => {
+         const isHidden = k >= 750 ? 'hidden-row high-cap' : '';
+         html += `
+         <tr class="bg-white ${isHidden}">
+             <td class="fw-bold">${k}</td>
+             <td><input type="number" class="cable-dt-count" data-kva="${k}" placeholder="0" oninput="validateTable()"></td>
+             <td><input type="number" class="cable-dt-mirror" id="mirror-${k}" placeholder="0" readonly style="background:#eee;"></td>
+             <td><input type="text" class="cable-size" value="${CABLE_MAP[k]}" readonly style="width:100%; text-align:center; border:none; background:transparent;"></td>
+             <td><input type="number" class="cable-len" data-kva="${k}" placeholder="0" oninput="validateTable()"></td>
+             <td class="fw-bold small cable-avg" id="avg-${k}">0</td>
+         </tr>`;
+     });
+     tbody.innerHTML = html;
+  }
+
+  function toggleHighCapacity() {
+      document.querySelectorAll('.high-cap').forEach(el => el.classList.toggle('hidden-row'));
+      const btn = document.querySelector('.show-more-btn');
+      if (btn) {
+          btn.innerHTML = btn.innerHTML.includes('Show') ? '<i class="bi bi-chevron-up"></i> Show less rating' : '<i class="bi bi-chevron-down"></i> Show more rating';
+      }
+  }
+
   async function apiCall(data) {
     try { const res = await fetch(API_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(data) }); return await res.json();
     } catch (e) { return { status: 'error', message: "Network Error" }; }
