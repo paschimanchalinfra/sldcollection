@@ -33,13 +33,41 @@
     .nav-link-custom { border: none; background: transparent; color: #6c757d; font-weight: 600; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: 0.2s; }
     .nav-link-custom.active { background-color: var(--primary); color: white; }
 
-    /* --- NEW STATUS STYLES --- */
+    /* STATUS STYLES */
     .stat-card { background: white; border-radius: 10px; padding: 15px; border-left: 5px solid var(--primary); margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
     .badge-zone { font-size: 0.7rem; background: #e3f2fd; color: var(--primary); padding: 4px 8px; border-radius: 4px; }
     .accordion-button:not(.collapsed) { background-color: rgba(15, 32, 75, 0.05); color: var(--primary); }
     .drill-table td { padding: 8px 4px; font-size: 0.8rem; }
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+
+    /* ADMIN PANEL STYLES */
+    .admin-tools { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 15px; }
+    .admin-box { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #ddd; }
+    .add-user-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: end; }
+    .add-user-grid label { margin: 0 0 4px; font-size: 12px; font-weight: 600; color: #555; }
+    .add-user-grid input, .add-user-grid select { padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; width: 100%; }
+    
+    .search-bar { display: flex; gap: 8px; flex-grow: 1; max-width: 400px; }
+    .search-bar input { padding: 8px 12px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; width: 100%;}
+    .btn-small { padding: 6px 12px; font-size: 13px; border-radius: 4px; cursor: pointer; border: 1px solid #ccc; background: #f8f9fa; font-weight:600;}
+    .btn-admin-primary { background: var(--primary); color: #fff; border:none; }
+    .btn-reset { background: #fff3e0; color: #e65100; border-color: #ffe0b2; }
+    
+    .admin-table-wrap { overflow-x: auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #ddd;}
+    .admin-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 600px; }
+    .admin-table th, .admin-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #eee; }
+    .admin-table th { background: #f8f9fa; font-weight: 700; color: var(--primary); position: sticky; top: 0; z-index: 10; }
+    .admin-table tr:hover { background-color: #f8f9fa; }
+    
+    .toggle-status { padding: 4px 8px; border-radius: 4px; font-weight: 600; cursor: pointer; text-align: center; border:none; width: 75px; font-size: 12px;}
+    .st-active { background: #e6f4ea; color: #137333; }
+    .st-inactive { background: #fce8e6; color: #c5221f; }
+    .role-select { padding: 4px; font-size: 12px; border-radius: 4px; border: 1px solid #ccc; width: 85px;}
+    
+    .pagination-ui { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 15px; font-size: 14px; font-weight: 600; }
+    .pagination-ui button { padding: 6px 12px; cursor: pointer; border-radius: 4px; border: 1px solid var(--primary); background: #fff; color: var(--primary); font-weight: bold; }
+    .pagination-ui button:disabled { border-color: #ccc; color: #999; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -52,18 +80,21 @@
 <div id="loginScreen" class="overlay">
   <div class="card-custom shadow" style="width: 350px;">
     <div class="text-center mb-4"><h3 class="fw-bold" style="color:var(--primary);">SLD Collection</h3></div>
-    <div class="mb-3"><label class="form-label">Emp Code</label><input type="text" id="loginEmpCode" class="form-control"></div>
+    <div class="mb-3"><label class="form-label">Emp Code</label><input type="text" id="loginEmpCode" class="form-control" placeholder="e.g. INTL123"></div>
     <div class="mb-3"><label class="form-label">Password</label><input type="password" id="loginPass" class="form-control"></div>
-    <button class="btn btn-primary w-100" onclick="attemptLogin()">Login</button>
+    <button class="btn btn-primary w-100 fw-bold" onclick="attemptLogin()">LOGIN</button>
     <div id="loginMsg" class="text-danger mt-3 text-center small fw-bold"></div>
   </div>
 </div>
 
-<div id="app" style="display:none;" class="container pt-3">
+<div id="app" style="display:none;" class="container pt-3 fade-in">
   
   <div class="d-flex justify-content-between align-items-center mb-3">
     <small class="text-muted">User: <span id="displayUserName" class="fw-bold text-dark" data-role="user"></span></small>
-    <button class="btn btn-sm btn-outline-danger" onclick="logout()">Logout</button>
+    <div>
+      <button id="btnNavAdmin" class="btn btn-sm btn-outline-primary fw-bold me-2 shadow-sm" style="display:none;" onclick="switchTab('admin')">🛡️ Admin Panel</button>
+      <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="logout()">Logout</button>
+    </div>
   </div>
 
   <div id="tabForm">
@@ -137,22 +168,20 @@
                 <table class="cable-table">
                     <thead>
                         <tr>
-                            <th style="width:15%">DT CAPACITY (KVA)</th>
-                            <th style="width:20%">TOTAL DTS (COUNT)</th>
-                            <th style="width:20%">DTS REQ CABLE (COUNT)</th>
-                            <th style="width:15%">CABLE SIZE (SQ. MM)</th>
-                            <th style="width:15%">TOTAL LENGTH (MTR)</th>
-                            <th style="width:15%">AVG LENGTH (MAX 34M)</th>
+                            <th style="width:15%">DT (KVA)</th>
+                            <th style="width:20%">TOTAL DTS</th>
+                            <th style="width:20%">REQ CABLE</th>
+                            <th style="width:15%">CABLE SIZE</th>
+                            <th style="width:15%">TOTAL LEN</th>
+                            <th style="width:15%">AVG LEN</th>
                         </tr>
                     </thead>
-                    <tbody id="cableTableBody">
-                        </tbody>
+                    <tbody id="cableTableBody"></tbody>
                     <tfoot class="table-light fw-bold">
                           <tr>
                              <td>TOTAL</td>
                              <td id="tbl-sum-count">0</td>
-                             <td>-</td>
-                             <td>-</td>
+                             <td>-</td><td>-</td>
                              <td id="tbl-sum-len">0</td>
                              <td>-</td>
                           </tr>
@@ -161,9 +190,7 @@
             </div>
             <div id="tbl-error-msg" class="val-msg text-center mt-2"></div>
             <div class="text-center">
-                <a class="show-more-btn text-primary" onclick="toggleHighCapacity()">
-                    <i class="bi bi-chevron-down"></i> Show more rating
-                </a>
+                <a class="show-more-btn text-primary" onclick="toggleHighCapacity()"><i class="bi bi-chevron-down"></i> Show more rating</a>
             </div>
         </div>
       </div>
@@ -179,14 +206,12 @@
   </div>
   
   <div id="tabStatus" style="display:none;" class="fade-in pb-5">
-    
     <div class="d-flex justify-content-center mb-3">
       <div class="btn-group shadow-sm" role="group">
         <input type="radio" class="btn-check" name="statView" id="vPendency" autocomplete="off" checked onchange="toggleStatView('pendency')">
-        <label class="btn btn-outline-primary btn-sm" for="vPendency">Site Pendency</label>
-
+        <label class="btn btn-outline-primary btn-sm fw-bold" for="vPendency">Site Pendency</label>
         <input type="radio" class="btn-check" name="statView" id="vUser" autocomplete="off" onchange="toggleStatView('user')">
-        <label class="btn btn-outline-primary btn-sm" for="vUser">User Progress</label>
+        <label class="btn btn-outline-primary btn-sm fw-bold" for="vUser">User Progress</label>
       </div>
     </div>
 
@@ -195,25 +220,66 @@
         <h6 class="text-muted fw-bold m-0">Zone Wise Status</h6>
         <small class="text-muted" style="font-size:0.7rem">Updated: <span id="lastUpdateStats">-</span></small>
       </div>
-      <div id="pendencyContainer">
-         </div>
+      <div id="pendencyContainer"></div>
     </div>
 
     <div id="viewUser" style="display:none;">
        <div class="alert alert-info py-2 small mb-3"><i class="bi bi-info-circle"></i> Showing submission stats.</div>
-       <div id="userStatsContainer">
-         </div>
+       <div id="userStatsContainer"></div>
     </div>
-    
   </div>
 
-  <div class="nav-tabs-custom">
-    <button class="nav-link-custom active" id="btnNavForm" onclick="switchTab('form')">
-      <i class="bi bi-ui-checks"></i> Form
-    </button>
-    <button class="nav-link-custom" id="btnNavStatus" onclick="switchTab('status')">
-      <i class="bi bi-graph-up-arrow"></i> Status
-    </button>
+  <div id="tabAdmin" style="display:none;" class="fade-in pb-5">
+    <div class="admin-box">
+      <h6 class="section-title text-success m-0 mb-3"><i class="bi bi-person-plus"></i> Add New User</h6>
+      <div class="add-user-grid">
+        <div><label>User Name</label><input type="text" id="n_name" placeholder="Full Name"></div>
+        <div><label>Emp Code</label><input type="text" id="n_code" placeholder="e.g. INTL123"></div>
+        <div><label>Mobile No</label><input type="number" id="n_mob" placeholder="10 Digits"></div>
+        <div><label>Designation</label><input type="text" id="n_desig" placeholder="Role/Title"></div>
+        <div><label>Role</label><select id="n_role"><option value="User">User</option><option value="Admin">Admin</option></select></div>
+        <div><button class="btn-small btn-admin-primary" style="width:100%; height:38px;" onclick="addNewUser()">Create User</button></div>
+      </div>
+      <div id="addMsg" class="mt-2 text-danger small fw-bold"></div>
+    </div>
+
+    <div class="admin-tools">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search Name or Emp Code..." onkeypress="if(event.key==='Enter') execSearch()">
+        <button class="btn-small btn-admin-primary" onclick="execSearch()">Search</button>
+        <button class="btn-small" onclick="clearSearch()">Clear</button>
+      </div>
+      <div id="adminMsg" class="text-danger small fw-bold"></div>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name / Designation</th>
+            <th>Emp Code</th>
+            <th>Mobile</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="adminTableBody">
+          <tr><td colspan="6" style="text-align:center; padding: 20px;">Loading users...</td></tr>
+        </tbody>
+      </table>
+    </div>
+    
+    <div class="pagination-ui">
+      <button id="btnPrevPage" onclick="changePage(-1)">&#8592; Prev</button>
+      <span id="pageInfo">Page 1 of 1</span>
+      <button id="btnNextPage" onclick="changePage(1)">Next &#8594;</button>
+    </div>
+  </div>
+
+  <div class="nav-tabs-custom" id="bottomNav">
+    <button class="nav-link-custom active" id="btnNavForm" onclick="switchTab('form')"><i class="bi bi-ui-checks"></i> Form</button>
+    <button class="nav-link-custom" id="btnNavStatus" onclick="switchTab('status')"><i class="bi bi-graph-up-arrow"></i> Status</button>
   </div>
 </div>
 
@@ -231,6 +297,9 @@
   const KVA_LIST = [10,16,25,63,100,160,250,315,400,630,750,800,1000,1200,1500,2000];
   let masterData = [], completedFeeders = [], payload = { signoffBase64: null, sldBase64: null };
   let statusLoaded = false;
+  
+  // ADMIN STATE
+  let adminState = { page: 1, limit: 20, search: '', totalPages: 1 };
 
   window.onload = function() {
     renderKvaInputs();
@@ -246,6 +315,206 @@
     }
   };
 
+  // --- CORE UI & API FUNCTIONS ---
+  async function apiCall(data) {
+    try {
+        const res = await fetch(API_URL, {
+            method: 'POST',
+            mode: 'cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify(data)
+        });
+        return await res.json();
+    } catch (e) { return { status: 'error', message: "Network Error" }; }
+  }
+
+  async function attemptLogin() {
+    const code = document.getElementById('loginEmpCode').value;
+    const pass = document.getElementById('loginPass').value;
+    
+    if(!code || !pass) return document.getElementById('loginMsg').innerText = "Please enter credentials.";
+    showLoader("Authenticating...");
+    
+    const res = await apiCall({ action: 'login', empCode: code, password: pass });
+    
+    if(res.status === 'success') {
+        const userData = res.data;
+        // Save to LocalStorage with role included
+        localStorage.setItem('sld_creds', JSON.stringify({code, pass, role: userData.role}));
+        
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        
+        const nameDisplay = document.getElementById('displayUserName');
+        nameDisplay.innerText = userData.name;
+        nameDisplay.setAttribute('data-role', userData.role || 'user');
+        
+        document.getElementById('uploaderName').value = userData.name;
+        document.getElementById('activeEmpCode').value = userData.empCode;
+        
+        // Show Admin Panel Button if authorized
+        if (userData.role && userData.role.toLowerCase() === 'admin') {
+            document.getElementById('btnNavAdmin').style.display = 'inline-block';
+        }
+
+        loadAppData();
+    } else {
+        hideLoader();
+        document.getElementById('loginMsg').innerText = res.message || "Failed";
+    }
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.nav-link-custom').forEach(b => b.classList.remove('active'));
+    document.getElementById('tabForm').style.display = 'none';
+    document.getElementById('tabStatus').style.display = 'none';
+    document.getElementById('tabAdmin').style.display = 'none';
+    
+    if (tab === 'form') {
+      document.getElementById('tabForm').style.display = 'block';
+      document.getElementById('btnNavForm').classList.add('active');
+    } else if (tab === 'status') {
+      document.getElementById('tabStatus').style.display = 'block';
+      document.getElementById('btnNavStatus').classList.add('active');
+      if(!statusLoaded) loadStatusData();
+    } else if (tab === 'admin') {
+      document.getElementById('tabAdmin').style.display = 'block';
+      fetchAdminData();
+    }
+  }
+
+  // --- ADMIN PANEL FUNCTIONS ---
+  function fetchAdminData() {
+    document.getElementById('adminMsg').innerText = "Loading users...";
+    const reqCode = document.getElementById('activeEmpCode').value;
+    
+    apiCall({ 
+      action: 'getUsersPaginated', 
+      adminCode: reqCode, 
+      page: adminState.page, 
+      limit: adminState.limit, 
+      search: adminState.search 
+    }).then(res => {
+      if(res.status === 'success') {
+        adminState.totalPages = res.data.totalPages;
+        adminState.page = res.data.currentPage;
+        updatePaginationUI(res.data.totalRecords);
+        renderAdminTable(res.data.users);
+        document.getElementById('adminMsg').innerText = "";
+      } else { 
+        document.getElementById('adminMsg').innerText = res.message; 
+      }
+    });
+  }
+
+  function renderAdminTable(users) {
+    const tbody = document.getElementById('adminTableBody');
+    tbody.innerHTML = '';
+    if (users.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users found.</td></tr>'; return; }
+
+    users.forEach(u => {
+      const isActive = u.status.toLowerCase() === 'active';
+      const statusClass = isActive ? 'st-active' : 'st-inactive';
+      
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-weight:600;">${u.name}<br><span style="font-weight:normal;color:#666;font-size:11px;">${u.designation}</span></td>
+        <td style="font-family:monospace;">${u.empCode}</td>
+        <td>${u.mobile || '-'}</td>
+        <td>
+          <select class="role-select" onchange="changeUserRole('${u.empCode}', this.value)">
+            <option value="Admin" ${u.role.toLowerCase()==='admin'?'selected':''}>Admin</option>
+            <option value="User" ${u.role.toLowerCase()==='user'?'selected':''}>User</option>
+          </select>
+        </td>
+        <td>
+          <button class="toggle-status ${statusClass}" onclick="toggleUserStatus('${u.empCode}', '${u.status}', this)">${u.status}</button>
+        </td>
+        <td>
+          <button class="btn-small btn-reset" onclick="resetUserPass('${u.empCode}', '${u.name}')">Reset Pass</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updatePaginationUI(total) {
+    document.getElementById('pageInfo').innerText = `Page ${adminState.page} of ${adminState.totalPages} (Total: ${total})`;
+    document.getElementById('btnPrevPage').disabled = adminState.page <= 1;
+    document.getElementById('btnNextPage').disabled = adminState.page >= adminState.totalPages;
+  }
+
+  function changePage(delta) {
+    const newPage = adminState.page + delta;
+    if(newPage >= 1 && newPage <= adminState.totalPages) {
+      adminState.page = newPage;
+      fetchAdminData();
+    }
+  }
+
+  function execSearch() { adminState.search = document.getElementById('searchInput').value.trim(); adminState.page = 1; fetchAdminData(); }
+  function clearSearch() { document.getElementById('searchInput').value = ''; adminState.search = ''; adminState.page = 1; fetchAdminData(); }
+
+  window.addNewUser = function() {
+    const p = {
+      action: 'createUser',
+      adminCode: document.getElementById('activeEmpCode').value,
+      name: document.getElementById('n_name').value.trim(),
+      empCode: document.getElementById('n_code').value.trim().toUpperCase(),
+      mobile: document.getElementById('n_mob').value.trim(),
+      designation: document.getElementById('n_desig').value.trim(),
+      role: document.getElementById('n_role').value
+    };
+    
+    if(!p.name || !p.empCode) return document.getElementById('addMsg').innerText = "Name and Emp Code are required.";
+    document.getElementById('addMsg').innerText = "Creating user...";
+    
+    apiCall(p).then(res => {
+      if(res.status === 'success') {
+        document.getElementById('addMsg').innerText = `Success: User created.`;
+        document.getElementById('addMsg').className = "mt-2 text-success small fw-bold";
+        ['n_name','n_code','n_mob','n_desig'].forEach(id=>document.getElementById(id).value=''); 
+        adminState.page = 1; adminState.search = ''; document.getElementById('searchInput').value = ''; fetchAdminData();
+      } else { 
+        document.getElementById('addMsg').innerText = res.message; 
+        document.getElementById('addMsg').className = "mt-2 text-danger small fw-bold";
+      }
+    });
+  }
+
+  window.toggleUserStatus = function(empCode, currentStatus, btnElement) {
+    const newStatus = currentStatus.toLowerCase() === 'active' ? 'Inactive' : 'Active';
+    btnElement.innerText = '...';
+    apiCall({ 
+      action: 'updateUserStatus', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode, status: newStatus 
+    }).then(res => {
+      if(res.status === 'success') {
+        btnElement.innerText = newStatus; 
+        btnElement.className = `toggle-status ${newStatus==='Active'?'st-active':'st-inactive'}`;
+        btnElement.setAttribute('onclick', `toggleUserStatus('${empCode}', '${newStatus}', this)`);
+      } else { alert("Failed: " + res.message); btnElement.innerText = currentStatus; }
+    });
+  }
+
+  window.changeUserRole = function(empCode, newRole) {
+    apiCall({ 
+      action: 'updateUserRole', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode, role: newRole 
+    }).then(res => {
+      if(res.status !== 'success') alert("Failed to update role: " + res.message);
+    });
+  }
+
+  window.resetUserPass = function(empCode, name) {
+    if(!confirm(`Reset password for ${name} to "Pass@123"?`)) return;
+    apiCall({ 
+      action: 'adminResetPassword', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode 
+    }).then(res => {
+      if(res.status === 'success') alert(`Password for ${name} reset to Pass@123 successfully.`); 
+      else alert("Failed: " + res.message);
+    });
+  }
+
+  // --- EXISTING SLD FORM FUNCTIONS (Untouched Logic) ---
   function renderKvaInputs() {
     const container = document.getElementById('kvaInputs');
     KVA_LIST.forEach(k => {
@@ -283,22 +552,18 @@
       btn.innerHTML = btn.innerHTML.includes('Show') ? '<i class="bi bi-chevron-up"></i> Show less rating' : '<i class="bi bi-chevron-down"></i> Show more rating';
   }
 
-  // --- LOGIC ---
   function calculateScope() {
     let sumScope = 0;
     document.querySelectorAll('.kva-scope-in').forEach(el => sumScope += Number(el.value || 0));
     const ptw = Number(document.getElementById('cap_ptw').value || 0);
     
-    // 1. Set Total & Not In Scope
     document.getElementById('out-totalScope').value = sumScope;
     document.getElementById('out-notInScope').value = ptw;
 
-    // 2. Calculate Balance
     const installed = Number(document.getElementById('in-installed').value || 0);
     const balance = Math.max(0, sumScope - ptw - installed);
     document.getElementById('out-balanceScope').value = balance;
 
-    // 3. Validate Cable Req
     const cableReq = Number(document.getElementById('in-cableReq').value || 0);
     const cableInput = document.getElementById('in-cableReq');
     
@@ -310,12 +575,9 @@
         document.getElementById('err-cableReq').innerText = "";
     }
 
-    // 4. AUTO-CALCULATE WITHOUT CABLE (New Logic)
-    // Formula: Balance - CableReq. (Clamp to 0 if negative)
     const woCable = Math.max(0, balance - cableReq);
     document.getElementById('in-withoutCable').value = woCable;
 
-    // 5. Toggle Cable Table
     const tableSec = document.getElementById('cableDetailsSection');
     if(cableReq > 0 && !cableInput.classList.contains('val-error')) {
         tableSec.style.display = 'block';
@@ -327,8 +589,7 @@
 
   function validateTable() {
     const globalLimit = Number(document.getElementById('in-cableReq').value || 0);
-    let currentSum = 0;
-    let lenSum = 0;
+    let currentSum = 0; let lenSum = 0;
 
     document.querySelectorAll('.cable-dt-count').forEach(input => {
         const count = Number(input.value || 0);
@@ -338,9 +599,7 @@
         const avgDisplay = document.getElementById(`avg-${kva}`);
         
         document.getElementById(`mirror-${kva}`).value = count;
-
-        currentSum += count;
-        lenSum += totalLen;
+        currentSum += count; lenSum += totalLen;
 
         const maxLen = count * 34;
         const avg = count > 0 ? (totalLen / count).toFixed(1) : 0;
@@ -370,7 +629,6 @@
   async function submitForm() {
     const form = document.getElementById('mainForm');
 
-    // [+] NEW: Validate that all hierarchy dropdowns are selected
     if (!form.zone.value || !form.circle.value || !form.division.value || 
         !form.subdiv.value || !form.substation.value || !form.feeder.value) {
         return alert("Validation Error: Please select all Location Details (Zone through Feeder) before submitting.");
@@ -387,40 +645,22 @@
         return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`);
     }
 
-    // 1. GENERATE SCOPE JSON
     const scopeArray = [];
     document.querySelectorAll('.kva-scope-in').forEach(input => {
         const val = Number(input.value || 0);
-        if (val > 0) {
-            const kvaName = input.name.replace('cap_', '');
-            scopeArray.push({ k: kvaName, v: val });
-        }
+        if (val > 0) scopeArray.push({ k: input.name.replace('cap_', ''), v: val });
     });
 
-    // 2. GENERATE CABLE JSON
-    const cableDetailsArray = [];
-    const cableSummaryArray = [];
-
+    const cableDetailsArray = []; const cableSummaryArray = [];
     document.querySelectorAll('.cable-dt-count').forEach(input => {
         const count = Number(input.value || 0);
         if(count > 0) {
             const kva = input.getAttribute('data-kva');
-            const lenInput = document.querySelector(`.cable-len[data-kva="${kva}"]`);
-            const totalLen = Number(lenInput.value || 0);
-            
-            cableDetailsArray.push({
-                k: kva,              
-                c: count,            
-                s: CABLE_MAP[kva],   
-                l: totalLen          
-            });
+            const totalLen = Number(document.querySelector(`.cable-len[data-kva="${kva}"]`).value || 0);
+            cableDetailsArray.push({ k: kva, c: count, s: CABLE_MAP[kva], l: totalLen });
             cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`);
         }
     });
-
-    const finalScopeJSON = scopeArray.length > 0 ? JSON.stringify(scopeArray) : "[]";
-    const finalCableJSON = cableDetailsArray.length > 0 ? JSON.stringify(cableDetailsArray) : "[]";
-    const finalSummary = cableSummaryArray.length > 0 ? cableSummaryArray.join(" | ") : "None";
 
     const data = {
         action: 'submit',
@@ -428,7 +668,6 @@
         uploaderEmpCode: document.getElementById('activeEmpCode').value,
         zone: form.zone.value, circle: form.circle.value, division: form.division.value,
         subdiv: form.subdiv.value, substation: form.substation.value, feeder: form.feeder.value,
-        
         totalScope: document.getElementById('out-totalScope').value,
         totalInstalled: document.getElementById('in-installed').value,
         balanceScope: document.getElementById('out-balanceScope').value,
@@ -436,12 +675,9 @@
         cableReq: document.getElementById('in-cableReq').value,
         withoutCable: document.getElementById('in-withoutCable').value,
         ptwCount: document.getElementById('cap_ptw').value,
-        
-        // PAYLOAD
-        scopeJSON: finalScopeJSON,       
-        cableSummary: finalSummary, 
-        cableJSON: finalCableJSON,   
-        
+        scopeJSON: scopeArray.length > 0 ? JSON.stringify(scopeArray) : "[]",        
+        cableSummary: cableSummaryArray.length > 0 ? cableSummaryArray.join(" | ") : "None",  
+        cableJSON: cableDetailsArray.length > 0 ? JSON.stringify(cableDetailsArray) : "[]",    
         signoffBase64: payload.signoffBase64,
         sldBase64: payload.sldBase64
     };
@@ -458,41 +694,7 @@
     }
   }
 
-  async function apiCall(data) {
-    try {
-        const res = await fetch(API_URL, {
-            method: 'POST',
-            mode: 'cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify(data)
-        });
-        return await res.json();
-    } catch (e) { return { status: 'error', message: "Network Error" }; }
-  }
-
-  async function attemptLogin() {
-    const code = document.getElementById('loginEmpCode').value;
-    const pass = document.getElementById('loginPass').value;
-    showLoader("Authenticating...");
-    const res = await apiCall({ action: 'login', empCode: code, password: pass });
-    if(res.status === 'success') {
-        localStorage.setItem('sld_creds', JSON.stringify({code, pass}));
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        
-        const nameDisplay = document.getElementById('displayUserName');
-        nameDisplay.innerText = res.data.name;
-        nameDisplay.setAttribute('data-role', res.data.role || 'user'); // Save Role
-        
-        document.getElementById('uploaderName').value = res.data.name;
-        document.getElementById('activeEmpCode').value = code;
-        loadAppData();
-    } else {
-        hideLoader();
-        document.getElementById('loginMsg').innerText = res.message || "Failed";
-    }
-  }
-
+  // --- EXISTING SLD UI HELPERS ---
   async function loadAppData() {
     showLoader("Loading Data...");
     const res = await fetch(API_URL);
@@ -505,22 +707,15 @@
     }
   }
 
-  // --- NEW STATUS FUNCTIONS ---
-  function switchTab(tab) {
-    document.querySelectorAll('.nav-link-custom').forEach(b => b.classList.remove('active'));
-    
-    if (tab === 'form') {
-      document.getElementById('tabForm').style.display = 'block';
-      document.getElementById('tabStatus').style.display = 'none';
-      document.getElementById('btnNavForm').classList.add('active');
-    } else {
-      document.getElementById('tabForm').style.display = 'none';
-      document.getElementById('tabStatus').style.display = 'block';
-      document.getElementById('btnNavStatus').classList.add('active');
-      if(!statusLoaded) loadStatusData();
-    }
-  }
+  function handleImage(input, key) { if(input.files[0]) { const reader = new FileReader(); reader.onload = e => payload[key] = e.target.result; reader.readAsDataURL(input.files[0]); } }
+  function populateSelect(id, idx, filters) { const sel = document.getElementById(id); sel.innerHTML = '<option value="">Select...</option>'; if(!masterData.length) return; const filtered = masterData.filter(r => filters.every((v, i) => v === null || r[i] === v)); const unique = [...new Set(filtered.map(r => r[idx]))].sort(); unique.forEach(val => { const opt = document.createElement('option'); opt.value = val; if(idx === 5 && completedFeeders.includes(val)) { opt.innerText = val + " (✅ Done)"; opt.disabled = true; } else opt.innerText = val; sel.appendChild(opt); }); }
+  function filterHierarchy(level) { const vals = ['sel-zone','sel-circle','sel-div','sel-subdiv','sel-substn'].map(id => document.getElementById(id).value || null); if(level === 'zone') { populateSelect('sel-circle', 1, [vals[0]]); clearSelects(['sel-div', 'sel-subdiv', 'sel-substn', 'sel-feeder']); } if(level === 'circle') { populateSelect('sel-div', 2, [vals[0], vals[1]]); clearSelects(['sel-subdiv', 'sel-substn', 'sel-feeder']); } if(level === 'div') { populateSelect('sel-subdiv', 3, [vals[0], vals[1], vals[2]]); clearSelects(['sel-substn', 'sel-feeder']); } if(level === 'subdiv') { populateSelect('sel-substn', 4, [vals[0], vals[1], vals[2], vals[3]]); clearSelects(['sel-feeder']); } if(level === 'substn') { populateSelect('sel-feeder', 5, [vals[0], vals[1], vals[2], vals[3], vals[4]]); } }
+  function clearSelects(ids) { ids.forEach(id => document.getElementById(id).innerHTML = '<option value="">Select...</option>'); }
+  function showLoader(txt) { document.getElementById('loader').style.display = 'flex'; document.getElementById('loaderText').innerText = txt; }
+  function hideLoader() { document.getElementById('loader').style.display = 'none'; }
+  function logout() { localStorage.removeItem('sld_creds'); location.reload(); }
 
+  // --- EXISTING STATUS DASHBOARD ---
   function toggleStatView(view) {
     document.getElementById('viewPendency').style.display = view === 'pendency' ? 'block' : 'none';
     document.getElementById('viewUser').style.display = view === 'user' ? 'block' : 'none';
@@ -529,51 +724,37 @@
   async function loadStatusData() {
     showLoader("Fetching Analytics...");
     const role = document.getElementById('displayUserName').getAttribute('data-role');
-    
-    const req = {
-      action: 'getStatus',
-      empCode: document.getElementById('activeEmpCode').value,
-      role: role
-    };
-
-    const res = await apiCall(req);
+    const res = await apiCall({ action: 'getStatus', empCode: document.getElementById('activeEmpCode').value, role: role });
     hideLoader();
-
     if (res.status === 'success') {
       renderPendency(res.data.pendency);
       renderUserProgress(res.data.userStats);
       document.getElementById('lastUpdateStats').innerText = res.data.lastUpdate;
       statusLoaded = true;
-    } else {
-      alert("Failed to load stats");
-    }
+    } else alert("Failed to load stats");
   }
 
   function renderPendency(data) {
     const container = document.getElementById('pendencyContainer');
     if (!data || data.length === 0) { container.innerHTML = '<div class="text-center mt-5 text-muted">No Data Available</div>'; return; }
-
     let html = '<div class="accordion" id="accStatus">';
     data.forEach((zone, idx) => {
       const colorClass = getProgColor(zone.pct);
       const isExpanded = idx === 0 ? 'show' : ''; 
       const btnCollapsed = idx === 0 ? '' : 'collapsed';
-
       html += `
         <div class="accordion-item border-0 shadow-sm mb-2" style="border-radius:8px; overflow:hidden;">
           <h2 class="accordion-header">
             <button class="accordion-button ${btnCollapsed} py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}">
               <div class="w-100">
                 <div class="d-flex justify-content-between mb-1">
-                  <span class="fw-bold">${zone.zone}</span>
-                  <span class="fw-bold text-${colorClass}">${zone.pct}%</span>
+                  <span class="fw-bold">${zone.zone}</span><span class="fw-bold text-${colorClass}">${zone.pct}%</span>
                 </div>
                 <div class="progress" style="height: 6px;">
                   <div class="progress-bar bg-${colorClass}" style="width: ${zone.pct}%"></div>
                 </div>
                 <div class="d-flex justify-content-between mt-1 small text-muted">
-                  <span>Done: ${zone.done}/${zone.total}</span>
-                  <span>Pending: ${zone.pending}</span>
+                  <span>Done: ${zone.done}/${zone.total}</span><span>Pending: ${zone.pending}</span>
                 </div>
               </div>
             </button>
@@ -583,79 +764,38 @@
                <table class="table table-sm table-borderless drill-table m-0">
                  <thead><tr class="text-muted border-bottom"><th>Division</th><th class="text-end">Done</th><th class="text-end">Gap</th><th class="text-end">%</th></tr></thead>
                  <tbody>
-                    ${zone.divisions.map(d => `
-                      <tr>
-                        <td>${d.name}</td>
-                        <td class="text-end fw-bold text-dark">${d.done}</td>
-                        <td class="text-end text-danger">${d.pending}</td>
-                        <td class="text-end"><span class="badge bg-${getProgColor(d.pct)}">${d.pct}%</span></td>
-                      </tr>
-                    `).join('')}
+                    ${zone.divisions.map(d => `<tr><td>${d.name}</td><td class="text-end fw-bold text-dark">${d.done}</td><td class="text-end text-danger">${d.pending}</td><td class="text-end"><span class="badge bg-${getProgColor(d.pct)}">${d.pct}%</span></td></tr>`).join('')}
                  </tbody>
                </table>
             </div>
           </div>
-        </div>
-      `;
+        </div>`;
     });
-    html += '</div>';
-    container.innerHTML = html;
+    container.innerHTML = html + '</div>';
   }
 
   function renderUserProgress(users) {
     const container = document.getElementById('userStatsContainer');
     if (!users || users.length === 0) { container.innerHTML = '<div class="text-center mt-4">No submissions found.</div>'; return; }
-
     let html = '';
     users.forEach(u => {
       html += `
         <div class="stat-card">
            <div class="d-flex justify-content-between">
-              <div>
-                <h6 class="fw-bold mb-0">${u.name}</h6>
-                <span class="text-muted small">${u.code}</span>
-              </div>
-              <div class="text-end">
-                 <h3 class="fw-bold text-primary mb-0">${u.total}</h3>
-                 <small class="text-muted" style="font-size:0.65rem">TOTAL SUBMITS</small>
-              </div>
+              <div><h6 class="fw-bold mb-0">${u.name}</h6><span class="text-muted small">${u.code}</span></div>
+              <div class="text-end"><h3 class="fw-bold text-primary mb-0">${u.total}</h3><small class="text-muted" style="font-size:0.65rem">TOTAL SUBMITS</small></div>
            </div>
            <hr class="my-2 opacity-25">
            <div class="row text-center" style="font-size:0.8rem;">
-              <div class="col-4 border-end">
-                 <div class="fw-bold text-success">${u.today}</div>
-                 <div class="text-muted small">Today</div>
-              </div>
-              <div class="col-8">
-                 <div class="text-truncate text-dark fw-bold">${u.zones}</div>
-                 <div class="text-muted small">Active Zones</div>
-              </div>
+              <div class="col-4 border-end"><div class="fw-bold text-success">${u.today}</div><div class="text-muted small">Today</div></div>
+              <div class="col-8"><div class="text-truncate text-dark fw-bold">${u.zones}</div><div class="text-muted small">Active Zones</div></div>
            </div>
-           <div class="mt-2 text-center bg-light rounded py-1">
-              <small class="text-muted" style="font-size:0.7rem">Last Active: ${u.lastActiveStr}</small>
-           </div>
-        </div>
-      `;
+           <div class="mt-2 text-center bg-light rounded py-1"><small class="text-muted" style="font-size:0.7rem">Last Active: ${u.lastActiveStr}</small></div>
+        </div>`;
     });
     container.innerHTML = html;
   }
-
-  function getProgColor(pct) {
-    if (pct >= 100) return 'success';
-    if (pct >= 50) return 'warning';
-    return 'danger';
-  }
-
-  // --- EXISTING HELPERS ---
-  function handleImage(input, key) { if(input.files[0]) { const reader = new FileReader(); reader.onload = e => payload[key] = e.target.result; reader.readAsDataURL(input.files[0]); } }
-  function populateSelect(id, idx, filters) { const sel = document.getElementById(id); sel.innerHTML = '<option value="">Select...</option>'; if(!masterData.length) return; const filtered = masterData.filter(r => filters.every((v, i) => v === null || r[i] === v)); const unique = [...new Set(filtered.map(r => r[idx]))].sort(); unique.forEach(val => { const opt = document.createElement('option'); opt.value = val; if(idx === 5 && completedFeeders.includes(val)) { opt.innerText = val + " (✅ Done)"; opt.disabled = true; } else opt.innerText = val; sel.appendChild(opt); }); }
-  function filterHierarchy(level) { const vals = ['sel-zone','sel-circle','sel-div','sel-subdiv','sel-substn'].map(id => document.getElementById(id).value || null); if(level === 'zone') { populateSelect('sel-circle', 1, [vals[0]]); clearSelects(['sel-div', 'sel-subdiv', 'sel-substn', 'sel-feeder']); } if(level === 'circle') { populateSelect('sel-div', 2, [vals[0], vals[1]]); clearSelects(['sel-subdiv', 'sel-substn', 'sel-feeder']); } if(level === 'div') { populateSelect('sel-subdiv', 3, [vals[0], vals[1], vals[2]]); clearSelects(['sel-substn', 'sel-feeder']); } if(level === 'subdiv') { populateSelect('sel-substn', 4, [vals[0], vals[1], vals[2], vals[3]]); clearSelects(['sel-feeder']); } if(level === 'substn') { populateSelect('sel-feeder', 5, [vals[0], vals[1], vals[2], vals[3], vals[4]]); } }
-  function clearSelects(ids) { ids.forEach(id => document.getElementById(id).innerHTML = '<option value="">Select...</option>'); }
-  function showLoader(txt) { document.getElementById('loader').style.display = 'flex'; document.getElementById('loaderText').innerText = txt; }
-  function hideLoader() { document.getElementById('loader').style.display = 'none'; }
-  function logout() { localStorage.removeItem('sld_creds'); location.reload(); }
+  function getProgColor(pct) { if (pct >= 100) return 'success'; if (pct >= 50) return 'warning'; return 'danger'; }
 </script>
 </body>
 </html>
-
-
