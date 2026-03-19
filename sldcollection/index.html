@@ -161,6 +161,22 @@
            <div class="col-6 col-md-3"><select id="qc-filter-circle" class="form-select form-select-sm" onchange="qcFilterChanged('circle')"><option value="">All Circles</option></select></div>
            <div class="col-6 col-md-3"><select id="qc-filter-div" class="form-select form-select-sm" onchange="qcFilterChanged('div')"><option value="">All Divisions</option></select></div>
            <div class="col-6 col-md-3"><select id="qc-filter-subdiv" class="form-select form-select-sm" onchange="qcFilterChanged('subdiv')"><option value="">All Sub Divs</option></select></div>
+           
+           <div class="col-12 col-md-4 mt-2">
+               <input type="text" id="qc-filter-search" class="form-control form-control-sm" placeholder="Search Feeder, Name or Code..." onkeyup="applyQCFilters()">
+           </div>
+           <div class="col-6 col-md-4 mt-2">
+               <div class="input-group input-group-sm">
+                   <span class="input-group-text bg-light text-muted">From</span>
+                   <input type="date" id="qc-filter-date-from" class="form-control" onchange="applyQCFilters()">
+               </div>
+           </div>
+           <div class="col-6 col-md-4 mt-2">
+               <div class="input-group input-group-sm">
+                   <span class="input-group-text bg-light text-muted">To</span>
+                   <input type="date" id="qc-filter-date-to" class="form-control" onchange="applyQCFilters()">
+               </div>
+           </div>
        </div>
 
        <div class="table-responsive bg-white rounded shadow-sm p-2 border">
@@ -317,24 +333,16 @@
   let statusLoaded = false;
   let adminState = { page: 1, limit: 20, search: '', totalPages: 1 };
   let qcDataList = [];
+
+  // ==========================================
+  // GLOBAL IMAGE UPLOAD HANDLERS
+  // ==========================================
   
-  // ==========================================
-  // GLOBAL IMAGE UPLOAD HANDLER
-  // ==========================================
   function handleImage(input, key) { 
-      // Ensure a file was actually selected by the user
-      if (input.files && input.files[0]) { 
-          const file = input.files[0];
+      if(input.files && input.files[0]) { 
           const reader = new FileReader(); 
-          
-          // Define the callback for when the file is fully read
-          reader.onload = function(e) { 
-              // Store the Base64 string in the global payload object
-              payload[key] = e.target.result; 
-          }; 
-          
-          // Read the file asynchronously as a Base64 Data URL
-          reader.readAsDataURL(file); 
+          reader.onload = function(e) { payload[key] = e.target.result; }; 
+          reader.readAsDataURL(input.files[0]); 
       } 
   }
 
@@ -391,7 +399,6 @@
     
     if(res.status === 'success') {
         const userData = res.data;
-        // Includes Zone mapping locally
         localStorage.setItem('sld_creds', JSON.stringify({code, pass, role: userData.role, zones: userData.zones}));
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
@@ -405,7 +412,6 @@
         
         const r = userData.role.toLowerCase();
         
-        // Strict UI Lock based on Role
         document.getElementById('bottomNav').style.display = 'none'; 
 
         if (r === 'admin') {
@@ -460,7 +466,6 @@
           
           const userData = JSON.parse(localStorage.getItem('sld_creds'));
           
-          // Populate Admin Panel Zone Multi-Select with all un-filtered zones
           const uniqueGlobalZones = [...new Set(masterData.map(r => r[0]))].sort();
           const nZones = document.getElementById('n_zones');
           if(nZones) { 
@@ -468,7 +473,6 @@
               uniqueGlobalZones.forEach(z => { if(z) nZones.innerHTML += `<option value="${z}">${z}</option>`; }); 
           }
 
-          // ENFORCE QC ZONE FILTERING AT HIERARCHY LEVEL
           if(userData && userData.role.toLowerCase() === 'qc' && userData.zones) {
               const allowed = userData.zones.split(',').map(z => z.trim().toLowerCase()).filter(z => z);
               if(allowed.length > 0) {
@@ -476,7 +480,6 @@
               }
           }
 
-          // Populate selectors using the appropriately filtered masterData
           populateSelect('sel-zone', 0, []); 
           if(userData && (userData.role.toLowerCase() === 'qc' || userData.role.toLowerCase() === 'admin')) {
               populateQCSelect('qc-filter-zone', 0, []);
@@ -564,9 +567,41 @@
       const d = document.getElementById('qc-filter-div').value;
       const sd = document.getElementById('qc-filter-subdiv').value;
 
+      // [+] NEW: Search and Date Ranges
+      const searchTxt = (document.getElementById('qc-filter-search').value || '').toLowerCase().trim();
+      const dateFromVal = document.getElementById('qc-filter-date-from').value;
+      const dateToVal = document.getElementById('qc-filter-date-to').value;
+
+      let dFrom = dateFromVal ? new Date(dateFromVal) : null;
+      if (dFrom) dFrom.setHours(0,0,0,0); // Start of day
+      
+      let dTo = dateToVal ? new Date(dateToVal) : null;
+      if (dTo) dTo.setHours(23,59,59,999); // End of day
+
       const filteredData = qcDataList.filter(r => {
-          return (!z || r.zone === z) && (!c || r.circle === c) && (!d || r.division === d) && (!sd || r.subdiv === sd);
+          // 1. Hierarchy Match
+          const matchLoc = (!z || r.zone === z) && (!c || r.circle === c) && (!d || r.division === d) && (!sd || r.subdiv === sd);
+          
+          // 2. Search Text Match (Feeder, Name, or Emp Code)
+          let matchSearch = true;
+          if (searchTxt) {
+              const fStr = String(r.feeder || '').toLowerCase();
+              const nStr = String(r.uploaderName || '').toLowerCase();
+              const cStr = String(r.uploaderEmpCode || '').toLowerCase();
+              matchSearch = fStr.includes(searchTxt) || nStr.includes(searchTxt) || cStr.includes(searchTxt);
+          }
+
+          // 3. Date Range Match
+          let matchDate = true;
+          if (dFrom || dTo) {
+              const rDate = new Date(r.date);
+              if (dFrom && rDate < dFrom) matchDate = false;
+              if (dTo && rDate > dTo) matchDate = false;
+          }
+
+          return matchLoc && matchSearch && matchDate;
       });
+      
       renderQCList(filteredData);
   }
 
@@ -575,7 +610,7 @@
     tbody.innerHTML = '';
     
     if(dataToRender.length === 0) { 
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted"><i class="bi bi-check2-all fs-3 d-block"></i> No pending validations for this selection.</td></tr>`; 
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted"><i class="bi bi-search fs-3 d-block"></i> No pending validations match your search/filter.</td></tr>`; 
         return; 
     }
 
@@ -691,11 +726,17 @@
     document.getElementById('qc-in-withoutCable').value = woCable;
     
     const tableSec = document.getElementById('qcCableDetailsSection'); 
+    
+    // [+] BUG FIX: Clear hidden errors when Cable Req drops to 0
     if(cableReq > 0 && !cableInput.classList.contains('val-error')) { 
         tableSec.style.display = 'block'; 
         qcValidateTable(); 
     } else {
-        tableSec.style.display = 'none'; 
+        tableSec.style.display = 'none';
+        // Erase any background validation errors so they do not block submission
+        document.querySelectorAll('#qcCableDetailsSection .val-error').forEach(el => el.classList.remove('val-error'));
+        const errDiv = document.getElementById('qc-tbl-error-msg');
+        if(errDiv) errDiv.innerText = "";
     }
   }
 
@@ -745,9 +786,12 @@
       
       const globalReq = Number(document.getElementById('qc-in-cableReq').value || 0); 
       let tableSum = 0; 
-      document.querySelectorAll('.qc-cable-dt-count').forEach(el => tableSum += Number(el.value || 0));
       
-      if (tableSum !== globalReq) return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`);
+      // [+] BUG FIX: Only test the table sum if Cable Req > 0
+      if (globalReq > 0) {
+          document.querySelectorAll('.qc-cable-dt-count').forEach(el => tableSum += Number(el.value || 0));
+          if (tableSum !== globalReq) return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`);
+      }
       
       const scopeArray = []; 
       document.querySelectorAll('.qc-kva-scope-in').forEach(input => { 
@@ -758,15 +802,18 @@
       const cableDetailsArray = []; 
       const cableSummaryArray = []; 
       
-      document.querySelectorAll('.qc-cable-dt-count').forEach(input => { 
-          const count = Number(input.value || 0); 
-          if(count > 0) { 
-              const kva = input.getAttribute('data-kva'); 
-              const totalLen = Number(document.querySelector(`.qc-cable-len[data-kva="${kva}"]`).value || 0); 
-              cableDetailsArray.push({ k: kva, c: count, s: CABLE_MAP[kva], l: totalLen }); 
-              cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`); 
-          } 
-      });
+      // [+] BUG FIX: Only pull cable JSON data if Cable Req > 0
+      if (globalReq > 0) {
+          document.querySelectorAll('.qc-cable-dt-count').forEach(input => { 
+              const count = Number(input.value || 0); 
+              if(count > 0) { 
+                  const kva = input.getAttribute('data-kva'); 
+                  const totalLen = Number(document.querySelector(`.qc-cable-len[data-kva="${kva}"]`).value || 0); 
+                  cableDetailsArray.push({ k: kva, c: count, s: CABLE_MAP[kva], l: totalLen }); 
+                  cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`); 
+              } 
+          });
+      }
 
       const data = {
           action: 'submitQC', 
@@ -867,10 +914,15 @@
       document.getElementById('in-withoutCable').value = woCable; 
       
       const tableSec = document.getElementById('cableDetailsSection'); 
+      
+      // [+] BUG FIX APPLIED HERE AS WELL
       if(cableReq > 0 && !cableInput.classList.contains('val-error')) { 
           tableSec.style.display = 'block'; validateTable(); 
       } else {
           tableSec.style.display = 'none'; 
+          document.querySelectorAll('#cableDetailsSection .val-error').forEach(el => el.classList.remove('val-error'));
+          const errDiv = document.getElementById('tbl-error-msg');
+          if(errDiv) errDiv.innerText = "";
       }
   }
   
@@ -921,8 +973,11 @@
       
       const globalReq = Number(document.getElementById('in-cableReq').value || 0); 
       let tableSum = 0; 
-      document.querySelectorAll('.cable-dt-count').forEach(el => tableSum += Number(el.value || 0)); 
-      if (tableSum !== globalReq) return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`); 
+      
+      if (globalReq > 0) {
+          document.querySelectorAll('.cable-dt-count').forEach(el => tableSum += Number(el.value || 0)); 
+          if (tableSum !== globalReq) return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`); 
+      }
       
       const scopeArray = []; 
       document.querySelectorAll('.kva-scope-in').forEach(input => { 
@@ -932,15 +987,17 @@
       
       const cableDetailsArray = []; 
       const cableSummaryArray = []; 
-      document.querySelectorAll('.cable-dt-count').forEach(input => { 
-          const count = Number(input.value || 0); 
-          if(count > 0) { 
-              const kva = input.getAttribute('data-kva'); 
-              const totalLen = Number(document.querySelector(`.cable-len[data-kva="${kva}"]`).value || 0); 
-              cableDetailsArray.push({ k: kva, c: count, s: CABLE_MAP[kva], l: totalLen }); 
-              cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`); 
-          } 
-      }); 
+      if (globalReq > 0) {
+          document.querySelectorAll('.cable-dt-count').forEach(input => { 
+              const count = Number(input.value || 0); 
+              if(count > 0) { 
+                  const kva = input.getAttribute('data-kva'); 
+                  const totalLen = Number(document.querySelector(`.cable-len[data-kva="${kva}"]`).value || 0); 
+                  cableDetailsArray.push({ k: kva, c: count, s: CABLE_MAP[kva], l: totalLen }); 
+                  cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`); 
+              } 
+          }); 
+      }
       
       const data = { 
           action: 'submit', uploaderName: document.getElementById('uploaderName').value, uploaderEmpCode: document.getElementById('activeEmpCode').value, 
