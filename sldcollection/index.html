@@ -61,7 +61,11 @@
 
 <div id="loginScreen" class="overlay">
   <div class="card-custom shadow" style="width: 350px;">
-    <div class="text-center mb-4"><h3 class="fw-bold" style="color:var(--primary);">SLD Collection</h3></div>
+    <div class="text-center mb-4">
+        <img src="https://drive.google.com/thumbnail?id=1LwEAwAex8XVjjdlNjRUIG1y0MMoYyqE4&sz=w500" 
+             alt="Logo" style="max-width: 250px; height: auto;">
+    </div>
+    
     <div class="mb-3"><label class="form-label">Emp Code</label><input type="text" id="loginEmpCode" class="form-control" placeholder="e.g. INTL123"></div>
     <div class="mb-3">
       <label class="form-label">Password</label>
@@ -70,22 +74,29 @@
         <button class="btn btn-outline-secondary" type="button" onclick="togglePass('loginPass', this)"><i class="bi bi-eye"></i></button>
       </div>
     </div>
-    <button class="btn btn-primary w-100 fw-bold mb-2" onclick="attemptLogin()">LOGIN</button>
-    <div class="text-center"><button class="btn btn-link btn-sm text-decoration-none" onclick="showChangePassModal()">Change Password?</button></div>
+    <button class="btn btn-primary w-100 fw-bold" onclick="attemptLogin()">LOGIN</button>
     <div id="loginMsg" class="text-danger mt-3 text-center small fw-bold"></div>
   </div>
 </div>
 
-<div class="modal fade" id="changePassModal" tabindex="-1">
+<div class="modal fade" id="changePassModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header"><h5 class="modal-title">Change Password</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body">
-        <div class="mb-2"><label class="small fw-bold">Emp Code</label><input type="text" id="cp-code" class="form-control form-control-sm"></div>
-        <div class="mb-2"><label class="small fw-bold">Current Password</label><input type="password" id="cp-old" class="form-control form-control-sm"></div>
-        <div class="mb-2"><label class="small fw-bold">New Password</label><input type="password" id="cp-new" class="form-control form-control-sm"></div>
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold">Update Account Password</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
-      <div class="modal-footer"><button type="button" class="btn btn-primary btn-sm w-100" onclick="execChangePassword()">Update Password</button></div>
+      <div class="modal-body">
+        <div class="mb-3"><label class="small fw-bold">Employee Code</label><input type="text" id="cp-code" class="form-control" readonly style="background:#f8f9fa;"></div>
+        <div class="mb-3"><label class="small fw-bold">Current Password</label><input type="password" id="cp-old" class="form-control" placeholder="Required for verification"></div>
+        <hr>
+        <div class="mb-3"><label class="small fw-bold">New Password</label><input type="password" id="cp-new" class="form-control" placeholder="Min 4 characters"></div>
+        <div class="mb-3"><label class="small fw-bold">Confirm New Password</label><input type="password" id="cp-confirm" class="form-control" placeholder="Re-type new password"></div>
+      </div>
+      <div class="modal-footer border-0">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary btn-sm px-4" onclick="execChangePassword()">Save Changes</button>
+      </div>
     </div>
   </div>
 </div>
@@ -93,7 +104,17 @@
 <div id="app" style="display:none;" class="container pt-3 fade-in">
   
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <small class="text-muted">User: <span id="displayUserName" class="fw-bold text-dark" data-role="user"></span></small>
+    <div class="d-flex align-items-center">
+        <img src="https://drive.google.com/thumbnail?id=1LwEAwAex8XVjjdlNjRUIG1y0MMoYyqE4&sz=w200" 
+             alt="Logo" style="height: 35px; margin-right: 12px;">
+        <div>
+            <small class="text-muted d-block" style="line-height:1">Logged in as:</small>
+            <span id="displayUserName" class="fw-bold text-dark" data-role="user"></span>
+            <button class="btn btn-link btn-sm p-0 ms-2 text-decoration-none" onclick="showChangePassModal()" style="font-size: 0.75rem;">
+                <i class="bi bi-shield-lock"></i> Change Pass
+            </button>
+        </div>
+    </div>
     <button class="btn btn-sm btn-outline-danger shadow-sm" onclick="logout()">Logout</button>
   </div>
 
@@ -164,10 +185,8 @@
   </div>
 
   <div id="tabQC" style="display:none;" class="fade-in pb-5">
-    
     <div id="qcListView">
        <h5 class="mb-3" style="color:#e65100; font-weight:bold;"><i class="bi bi-shield-check"></i> QC Dashboard</h5>
-       
        <div class="row g-2 mb-3 bg-white p-2 rounded shadow-sm border mx-0">
            <div class="col-6 col-md-3"><select id="qc-filter-zone" class="form-select form-select-sm" onchange="qcFilterChanged('zone')"><option value="">All Zones</option></select></div>
            <div class="col-6 col-md-3"><select id="qc-filter-circle" class="form-select form-select-sm" onchange="qcFilterChanged('circle')"><option value="">All Circles</option></select></div>
@@ -202,7 +221,6 @@
     <div id="qcEditView" style="display:none;">
        <button class="btn btn-sm btn-secondary mb-3 shadow-sm" onclick="closeQCForm()"><i class="bi bi-arrow-left"></i> Back to List</button>
        <h5 class="text-primary mb-3 fw-bold">QC Review & Correction Form</h5>
-       
        <form id="qcForm">
           <input type="hidden" id="qc-rowIdx">
           <input type="hidden" id="qc-oldSignUrl">
@@ -232,10 +250,8 @@
             <div class="row g-3">
               <div class="col-6"><label class="form-label text-muted">Total Scope</label><input type="number" class="form-control bg-light" id="qc-out-totalScope" readonly></div>
               <div class="col-6"><label class="form-label text-muted">Not In Scope</label><input type="number" class="form-control bg-light" id="qc-out-notInScope" readonly></div>
-              
               <div class="col-6"><label class="form-label text-primary fw-bold">Installed <i class="bi bi-pencil-square"></i></label><input type="number" class="form-control border-primary" id="qc-in-installed" oninput="qcCalculateScope()"></div>
               <div class="col-6"><label class="form-label text-primary fw-bold">Cable Req <i class="bi bi-pencil-square"></i></label><input type="number" class="form-control border-primary" id="qc-in-cableReq" oninput="qcCalculateScope()"><div id="qc-err-cableReq" class="val-msg"></div></div>
-              
               <div class="col-12"><hr class="my-1"></div>
               <div class="col-6"><label class="form-label fw-bold text-success">Balance Scope</label><input type="number" class="form-control fw-bold text-success bg-light" id="qc-out-balanceScope" readonly></div>
               <div class="col-6"><label class="form-label text-muted">Without Cable</label><input type="number" class="form-control bg-light" id="qc-in-withoutCable" readonly><div id="qc-err-withoutCable" class="val-msg"></div></div>
@@ -335,7 +351,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  // =============== CONFIG ===============
   const API_URL = 'https://script.google.com/macros/s/AKfycbwCL0qhkMW9EZvDPCWjKcp1mjKr9Y0BmCNAemItqf6ei4-ap-lV2TNsJiIP1082eT0n/exec'; 
   const CABLE_MAP = { 10:35, 16:35, 25:35, 63:70, 100:120, 160:240, 250:400, 315:400, 400:630, 630:1000, 750:1000, 800:1000, 1000:1000, 1200:1000, 1500:1000, 2000:1000 };
   const KVA_LIST = [10,16,25,63,100,160,250,315,400,630,750,800,1000,1200,1500,2000];
@@ -346,9 +361,6 @@
   let adminState = { page: 1, limit: 20, search: '', totalPages: 1 };
   let qcDataList = [];
 
-  // ==========================================
-  // IMAGE UPLOAD HANDLERS
-  // ==========================================
   function handleImage(input, key) { 
       if(input.files && input.files[0]) { 
           const reader = new FileReader(); 
@@ -364,9 +376,6 @@
       } 
   }
 
-  // ==========================================
-  // LOGIN / PASS ENHANCEMENTS
-  // ==========================================
   function togglePass(inputId, btn) {
     const input = document.getElementById(inputId);
     const icon = btn.querySelector('i');
@@ -380,28 +389,39 @@
   }
 
   function showChangePassModal() {
-    const code = document.getElementById('loginEmpCode').value;
-    document.getElementById('cp-code').value = code;
-    new bootstrap.Modal(document.getElementById('changePassModal')).show();
+    const codeInput = document.getElementById('loginEmpCode');
+    const activeCode = document.getElementById('activeEmpCode').value;
+    document.getElementById('cp-code').value = activeCode || codeInput.value || "";
+    const modalEl = document.getElementById('changePassModal');
+    let modalInstance = bootstrap.Modal.getInstance(modalEl);
+    if (!modalInstance) { modalInstance = new bootstrap.Modal(modalEl); }
+    modalInstance.show();
   }
 
   async function execChangePassword() {
     const empCode = document.getElementById('cp-code').value;
     const oldPass = document.getElementById('cp-old').value;
     const newPass = document.getElementById('cp-new').value;
-    if(!empCode || !oldPass || !newPass) return alert("All fields required.");
+    const confirmPass = document.getElementById('cp-confirm').value;
+
+    if(!empCode || !oldPass || !newPass) return alert("Please fill all fields.");
+    if(newPass.length < 4) return alert("New password must be at least 4 characters.");
+    if(newPass !== confirmPass) return alert("New passwords do not match.");
+    
     showLoader("Updating Password...");
-    const res = await apiCall({ action: 'changePassword', empCode, oldPass, newPass });
-    hideLoader();
-    if(res.status === 'success') {
-      alert("Updated! Please login with your new password.");
-      bootstrap.Modal.getInstance(document.getElementById('changePassModal')).hide();
-    } else { alert("Error: " + res.message); }
+    try {
+        const res = await apiCall({ action: 'changePassword', empCode, oldPass, newPass });
+        hideLoader();
+        if(res.status === 'success') {
+          alert("Success! Password has been updated.");
+          bootstrap.Modal.getInstance(document.getElementById('changePassModal')).hide();
+          document.getElementById('cp-old').value = "";
+          document.getElementById('cp-new').value = "";
+          document.getElementById('cp-confirm').value = "";
+        } else { alert("Update Failed: " + res.message); }
+    } catch(e) { hideLoader(); alert("Network Error"); }
   }
 
-  // ==========================================
-  // INITIALIZATION
-  // ==========================================
   window.onload = function() {
     renderKvaInputs(); 
     renderCableTableRows();
@@ -457,9 +477,6 @@
     else if (tab === 'qc') { document.getElementById('tabQC').style.display = 'block'; closeQCForm(); fetchQCData(); }
   }
 
-  // ==========================================
-  // DATA FETCH & UNIVERSAL FILTERING
-  // ==========================================
   async function loadAppData() { 
       showLoader("Loading Hierarchy..."); 
       const res = await fetch(API_URL); 
@@ -469,23 +486,18 @@
           masterData = json.data.hierarchy; 
           completedFeeders = json.data.completedFeeders; 
           const userData = JSON.parse(localStorage.getItem('sld_creds'));
-          
-          // Populate Admin Zone UI
           const uniqueGlobalZones = [...new Set(masterData.map(r => r[0]))].sort();
           const nZones = document.getElementById('n_zones');
           if(nZones) { 
               nZones.innerHTML = ''; 
               uniqueGlobalZones.forEach(z => { if(z) nZones.innerHTML += `<option value="${z}">${z}</option>`; }); 
           }
-
-          // UNIVERSAL ZONE RESTRICTION (Apply to Users AND QC)
           if(userData && userData.role.toLowerCase() !== 'admin' && userData.zones) {
               const allowed = userData.zones.split(',').map(z => z.trim().toLowerCase()).filter(z => z);
               if(allowed.length > 0) {
                   masterData = masterData.filter(r => allowed.includes(String(r[0]).trim().toLowerCase()));
               }
           }
-
           populateSelect('sel-zone', 0, []); 
           if(userData && (userData.role.toLowerCase() === 'qc' || userData.role.toLowerCase() === 'admin')) populateQCSelect('qc-filter-zone', 0, []);
       } 
@@ -514,9 +526,6 @@
   }
   function clearSelects(ids) { ids.forEach(id => document.getElementById(id).innerHTML = '<option value="">Select...</option>'); }
 
-  // ==========================================
-  // QC WORKFLOW
-  // ==========================================
   async function fetchQCData() {
     showLoader("Fetching Pending Validations...");
     const res = await apiCall({ action: 'getQCData', empCode: document.getElementById('activeEmpCode').value });
@@ -553,7 +562,6 @@
       const searchTxt = (document.getElementById('qc-filter-search').value || '').toLowerCase().trim();
       const dFrom = document.getElementById('qc-filter-date-from').value ? new Date(document.getElementById('qc-filter-date-from').value).setHours(0,0,0,0) : null;
       const dTo = document.getElementById('qc-filter-date-to').value ? new Date(document.getElementById('qc-filter-date-to').value).setHours(23,59,59,999) : null;
-
       const filtered = qcDataList.filter(r => {
           const matchLoc = (!z || r.zone === z) && (!c || r.circle === c) && (!d || r.division === d) && (!sd || r.subdiv === sd);
           const matchSearch = !searchTxt || (r.feeder+r.uploaderName+r.uploaderEmpCode).toLowerCase().includes(searchTxt);
@@ -653,9 +661,6 @@
       hideLoader(); if(res.status === 'success') { alert("Approved!"); fetchQCData(); closeQCForm(); } else alert(res.message);
   }
 
-  // ==========================================
-  // USER VIEW DOM RENDERERS
-  // ==========================================
   function renderKvaInputs() { 
       const container = document.getElementById('kvaInputs'); 
       KVA_LIST.forEach(k => { container.innerHTML += `<div class="col-3"><div class="text-center"><label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label><input type="number" class="form-control text-center p-1 kva-scope-in" name="cap_${k}" id="cap_${k}" value="0" min="0" oninput="calculateScope()"></div></div>`; }); 
@@ -710,9 +715,6 @@
       hideLoader(); if(res.status === 'success') { alert("Success!"); location.reload(); } else alert(res.message);
   }
 
-  // ==========================================
-  // ADMIN & STATUS
-  // ==========================================
   function fetchAdminData() { apiCall({ action: 'getUsersPaginated', adminCode: document.getElementById('activeEmpCode').value, page: adminState.page, limit: adminState.limit, search: adminState.search }).then(res => { if(res.status === 'success') { adminState.totalPages = res.data.totalPages; adminState.page = res.data.currentPage; updatePaginationUI(res.data.totalRecords); renderAdminTable(res.data.users); } }); }
   function toggleAdminZoneInput() { document.getElementById('n_zones_container').style.display = document.getElementById('n_role').value === 'QC' ? 'block' : 'none'; }
   function renderAdminTable(users) { const tbody = document.getElementById('adminTableBody'); tbody.innerHTML = ''; users.forEach(u => { const isActive = u.status.toLowerCase() === 'active', sCls = isActive ? 'st-active' : 'st-inactive'; const zHtml = u.role.toLowerCase() === 'qc' ? `<button class="btn btn-link btn-sm p-0" onclick="editUserZones('${u.empCode}', '${u.zones}')">Edit Zones</button>` : '-'; const tr = document.createElement('tr'); tr.innerHTML = `<td><strong>${u.name}</strong><br><small>${u.designation}</small></td><td>${u.empCode}</td><td>${u.role}</td><td>${zHtml}</td><td><button class="toggle-status ${sCls}" onclick="toggleUserStatus('${u.empCode}', '${u.status}', this)">${u.status}</button></td><td><button class="btn-small" onclick="resetUserPass('${u.empCode}', '${u.name}')">Reset</button></td>`; tbody.appendChild(tr); }); }
