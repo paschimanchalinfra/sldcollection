@@ -9,34 +9,27 @@
   <style>
     :root { --primary: #0F204B; --secondary: #78BE20; --bg: #f4f7f9; --text-dark: #333; --error: #dc3545; }
     body { background-color: var(--bg); font-family: 'Inter', sans-serif; color: var(--text-dark); padding-bottom: 70px; }
-    
     .card-custom { background: white; border-radius: 12px; padding: 20px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 20px; }
     .section-title { font-size: 0.9rem; text-transform: uppercase; color: var(--primary); font-weight: 700; border-bottom: 2px solid #e9ecef; padding-bottom: 8px; margin-bottom: 15px; }
     .form-label { font-size: 0.85rem; font-weight: 500; color: #555; }
     .val-error { border-color: var(--error) !important; background-color: #fff8f8; }
     .val-msg { color: var(--error); font-size: 0.7rem; font-weight: 700; display: block; margin-top: 2px; }
-
     .cable-table { width: 100%; font-size: 0.75rem; border-collapse: collapse; text-align: center; }
     .cable-table th { background-color: #e3f2fd; color: var(--primary); padding: 8px 4px; border: 1px solid #dee2e6; vertical-align: middle; white-space: normal; }
     .cable-table td { padding: 4px; border: 1px solid #dee2e6; vertical-align: middle; }
     .cable-table input { width: 100%; text-align: center; border: 1px solid #ced4da; padding: 4px; border-radius: 4px; font-size: 0.8rem; }
     .cable-table input:focus { outline: none; border-color: var(--primary); }
     .cable-table input:read-only { background-color: #f8f9fa; color: #666; }
-    
     .hidden-row { display: none; }
     .show-more-btn { font-size: 0.8rem; font-weight: 600; text-decoration: none; cursor: pointer; display: block; margin-top: 10px; text-align: center; }
-
     .loader-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.98); z-index: 4000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
     .overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
-    
     .nav-tabs-custom { position: fixed; bottom: 0; left: 0; width: 100%; background: white; z-index: 1000; display: flex; justify-content: space-around; padding: 10px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
     .nav-link-custom { border: none; background: transparent; color: #6c757d; font-weight: 600; padding: 8px 15px; border-radius: 20px; cursor: pointer; transition: 0.2s; }
     .nav-link-custom.active { background-color: var(--primary); color: white; }
-
     .stat-card { background: white; border-radius: 10px; padding: 15px; border-left: 5px solid var(--primary); margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
     .accordion-button:not(.collapsed) { background-color: rgba(15, 32, 75, 0.05); color: var(--primary); }
     .drill-table td { padding: 8px 4px; font-size: 0.8rem; }
-    
     .admin-tools { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 15px; }
     .admin-box { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #ddd; }
     .add-user-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; align-items: end; }
@@ -52,11 +45,9 @@
     .admin-table th { background: #f8f9fa; font-weight: 700; color: var(--primary); position: sticky; top: 0; z-index: 10; }
     .toggle-status { padding: 4px 8px; border-radius: 4px; font-weight: 600; cursor: pointer; border:none; width: 75px; font-size: 12px;}
     .st-active { background: #e6f4ea; color: #137333; } .st-inactive { background: #fce8e6; color: #c5221f; }
-    
     .qc-table th { background-color: #fff3e0; color: #e65100; border-color: #ffe0b2; }
     .read-only-box { background: #f8f9fa; border: 1px dashed #ced4da; padding: 10px; border-radius: 6px; font-size: 0.85rem; }
     .btn-qc-view { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: bold; }
-    
     .fade-in { animation: fadeIn 0.3s ease-in; }
     @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
   </style>
@@ -72,9 +63,30 @@
   <div class="card-custom shadow" style="width: 350px;">
     <div class="text-center mb-4"><h3 class="fw-bold" style="color:var(--primary);">SLD Collection</h3></div>
     <div class="mb-3"><label class="form-label">Emp Code</label><input type="text" id="loginEmpCode" class="form-control" placeholder="e.g. INTL123"></div>
-    <div class="mb-3"><label class="form-label">Password</label><input type="password" id="loginPass" class="form-control"></div>
-    <button class="btn btn-primary w-100 fw-bold" onclick="attemptLogin()">LOGIN</button>
+    <div class="mb-3">
+      <label class="form-label">Password</label>
+      <div class="input-group">
+        <input type="password" id="loginPass" class="form-control">
+        <button class="btn btn-outline-secondary" type="button" onclick="togglePass('loginPass', this)"><i class="bi bi-eye"></i></button>
+      </div>
+    </div>
+    <button class="btn btn-primary w-100 fw-bold mb-2" onclick="attemptLogin()">LOGIN</button>
+    <div class="text-center"><button class="btn btn-link btn-sm text-decoration-none" onclick="showChangePassModal()">Change Password?</button></div>
     <div id="loginMsg" class="text-danger mt-3 text-center small fw-bold"></div>
+  </div>
+</div>
+
+<div class="modal fade" id="changePassModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Change Password</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div class="mb-2"><label class="small fw-bold">Emp Code</label><input type="text" id="cp-code" class="form-control form-control-sm"></div>
+        <div class="mb-2"><label class="small fw-bold">Current Password</label><input type="password" id="cp-old" class="form-control form-control-sm"></div>
+        <div class="mb-2"><label class="small fw-bold">New Password</label><input type="password" id="cp-new" class="form-control form-control-sm"></div>
+      </div>
+      <div class="modal-footer"><button type="button" class="btn btn-primary btn-sm w-100" onclick="execChangePassword()">Update Password</button></div>
+    </div>
   </div>
 </div>
 
@@ -96,7 +108,7 @@
           <div class="col-6"><label class="form-label">Circle</label><select name="circle" id="sel-circle" class="form-select form-select-sm" onchange="filterHierarchy('circle')"></select></div>
           <div class="col-6"><label class="form-label">Division</label><select name="division" id="sel-div" class="form-select form-select-sm" onchange="filterHierarchy('div')"></select></div>
           <div class="col-6"><label class="form-label">Sub Div</label><select name="subdiv" id="sel-subdiv" class="form-select form-select-sm" onchange="filterHierarchy('subdiv')"></select></div>
-          <div class="col-6"><label class="form-label">Substation</label><select name="substation" id="sel-substn" class="form-select form-select-sm" onchange="filterHierarchy('substn')"></select></div>
+          <div class="col-6"><label class="form-label">Substation</label><select name="substn" id="sel-substn" class="form-select form-select-sm" onchange="filterHierarchy('substn')"></select></div>
           <div class="col-12"><label class="form-label text-primary fw-bold">Feeder</label><select name="feeder" id="sel-feeder" class="form-select"></select></div>
         </div>
       </div>
@@ -335,9 +347,8 @@
   let qcDataList = [];
 
   // ==========================================
-  // GLOBAL IMAGE UPLOAD HANDLERS
+  // IMAGE UPLOAD HANDLERS
   // ==========================================
-  
   function handleImage(input, key) { 
       if(input.files && input.files[0]) { 
           const reader = new FileReader(); 
@@ -345,7 +356,6 @@
           reader.readAsDataURL(input.files[0]); 
       } 
   }
-
   function handleQCImage(input, key) { 
       if(input.files && input.files[0]) { 
           const reader = new FileReader(); 
@@ -355,117 +365,112 @@
   }
 
   // ==========================================
+  // LOGIN / PASS ENHANCEMENTS
+  // ==========================================
+  function togglePass(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.replace('bi-eye', 'bi-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.replace('bi-eye-slash', 'bi-eye');
+    }
+  }
+
+  function showChangePassModal() {
+    const code = document.getElementById('loginEmpCode').value;
+    document.getElementById('cp-code').value = code;
+    new bootstrap.Modal(document.getElementById('changePassModal')).show();
+  }
+
+  async function execChangePassword() {
+    const empCode = document.getElementById('cp-code').value;
+    const oldPass = document.getElementById('cp-old').value;
+    const newPass = document.getElementById('cp-new').value;
+    if(!empCode || !oldPass || !newPass) return alert("All fields required.");
+    showLoader("Updating Password...");
+    const res = await apiCall({ action: 'changePassword', empCode, oldPass, newPass });
+    hideLoader();
+    if(res.status === 'success') {
+      alert("Updated! Please login with your new password.");
+      bootstrap.Modal.getInstance(document.getElementById('changePassModal')).hide();
+    } else { alert("Error: " + res.message); }
+  }
+
+  // ==========================================
   // INITIALIZATION
   // ==========================================
-
   window.onload = function() {
     renderKvaInputs(); 
     renderCableTableRows();
     renderQCKvaInputs(); 
     renderQCCableTableRows();
-    
     const saved = localStorage.getItem('sld_creds');
     if(saved) {
        const c = JSON.parse(saved);
        document.getElementById('loginEmpCode').value = c.code;
        document.getElementById('loginPass').value = c.pass;
        attemptLogin();
-    } else {
-       document.getElementById('loader').style.display = 'none';
-    }
+    } else { hideLoader(); }
   };
 
   async function apiCall(data) {
     try { 
         const res = await fetch(API_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(data) }); 
         return await res.json();
-    } catch (e) { 
-        return { status: 'error', message: "Network Error" }; 
-    }
+    } catch (e) { return { status: 'error', message: "Network Error" }; }
   }
-
-  // ==========================================
-  // STRICT FRONTEND ROLE-BASED LOGIN LOGIC
-  // ==========================================
 
   async function attemptLogin() {
     const code = document.getElementById('loginEmpCode').value; 
     const pass = document.getElementById('loginPass').value;
-    
     if(!code || !pass) return document.getElementById('loginMsg').innerText = "Please enter credentials.";
     showLoader("Authenticating...");
-    
     const res = await apiCall({ action: 'login', empCode: code, password: pass });
-    
     if(res.status === 'success') {
         const userData = res.data;
         localStorage.setItem('sld_creds', JSON.stringify({code, pass, role: userData.role, zones: userData.zones}));
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('app').style.display = 'block';
-        
         const nameDisplay = document.getElementById('displayUserName');
         nameDisplay.innerText = userData.name;
         nameDisplay.setAttribute('data-role', userData.role || 'user');
-        
         document.getElementById('uploaderName').value = userData.name;
         document.getElementById('activeEmpCode').value = userData.empCode;
-        
         const r = userData.role.toLowerCase();
-        
         document.getElementById('bottomNav').style.display = 'none'; 
-
-        if (r === 'admin') {
-            switchTab('admin');
-        } else if (r === 'qc') {
-            switchTab('qc');
-        } else {
-            document.getElementById('bottomNav').style.display = 'flex';
-            switchTab('form');
-        }
-
+        if (r === 'admin') switchTab('admin');
+        else if (r === 'qc') switchTab('qc');
+        else { document.getElementById('bottomNav').style.display = 'flex'; switchTab('form'); }
         loadAppData();
-    } else {
-        hideLoader(); document.getElementById('loginMsg').innerText = res.message || "Failed";
-    }
+    } else { hideLoader(); document.getElementById('loginMsg').innerText = res.message || "Failed"; }
   }
 
   function switchTab(tab) {
     document.querySelectorAll('.nav-link-custom').forEach(b => b.classList.remove('active'));
     ['tabForm', 'tabStatus', 'tabAdmin', 'tabQC'].forEach(id => document.getElementById(id).style.display = 'none');
-    
-    if (tab === 'form') { 
-        document.getElementById('tabForm').style.display = 'block'; 
-        document.getElementById('btnNavForm').classList.add('active'); 
-    } else if (tab === 'status') { 
-        document.getElementById('tabStatus').style.display = 'block'; 
-        document.getElementById('btnNavStatus').classList.add('active'); 
-        if(!statusLoaded) loadStatusData(); 
-    } else if (tab === 'admin') { 
-        document.getElementById('tabAdmin').style.display = 'block'; 
-        fetchAdminData(); 
-    } else if (tab === 'qc') { 
-        document.getElementById('tabQC').style.display = 'block'; 
-        closeQCForm(); 
-        fetchQCData(); 
-    }
+    if (tab === 'form') { document.getElementById('tabForm').style.display = 'block'; document.getElementById('btnNavForm').classList.add('active'); }
+    else if (tab === 'status') { document.getElementById('tabStatus').style.display = 'block'; document.getElementById('btnNavStatus').classList.add('active'); if(!statusLoaded) loadStatusData(); }
+    else if (tab === 'admin') { document.getElementById('tabAdmin').style.display = 'block'; fetchAdminData(); }
+    else if (tab === 'qc') { document.getElementById('tabQC').style.display = 'block'; closeQCForm(); fetchQCData(); }
   }
 
   // ==========================================
-  // GLOBAL DATA FETCH & QC ROLE RESTRICTION
+  // DATA FETCH & UNIVERSAL FILTERING
   // ==========================================
-
   async function loadAppData() { 
       showLoader("Loading Hierarchy..."); 
       const res = await fetch(API_URL); 
       const json = await res.json(); 
       hideLoader(); 
-      
       if(json.status === 'success') { 
           masterData = json.data.hierarchy; 
           completedFeeders = json.data.completedFeeders; 
-          
           const userData = JSON.parse(localStorage.getItem('sld_creds'));
           
+          // Populate Admin Zone UI
           const uniqueGlobalZones = [...new Set(masterData.map(r => r[0]))].sort();
           const nZones = document.getElementById('n_zones');
           if(nZones) { 
@@ -473,7 +478,8 @@
               uniqueGlobalZones.forEach(z => { if(z) nZones.innerHTML += `<option value="${z}">${z}</option>`; }); 
           }
 
-          if(userData && userData.role.toLowerCase() === 'qc' && userData.zones) {
+          // UNIVERSAL ZONE RESTRICTION (Apply to Users AND QC)
+          if(userData && userData.role.toLowerCase() !== 'admin' && userData.zones) {
               const allowed = userData.zones.split(',').map(z => z.trim().toLowerCase()).filter(z => z);
               if(allowed.length > 0) {
                   masterData = masterData.filter(r => allowed.includes(String(r[0]).trim().toLowerCase()));
@@ -481,9 +487,7 @@
           }
 
           populateSelect('sel-zone', 0, []); 
-          if(userData && (userData.role.toLowerCase() === 'qc' || userData.role.toLowerCase() === 'admin')) {
-              populateQCSelect('qc-filter-zone', 0, []);
-          }
+          if(userData && (userData.role.toLowerCase() === 'qc' || userData.role.toLowerCase() === 'admin')) populateQCSelect('qc-filter-zone', 0, []);
       } 
   }
 
@@ -491,20 +495,12 @@
       const sel = document.getElementById(id); 
       sel.innerHTML = '<option value="">Select...</option>'; 
       if(!masterData.length) return; 
-      
       const filtered = masterData.filter(r => filters.every((v, i) => v === null || r[i] === v)); 
       const unique = [...new Set(filtered.map(r => r[idx]))].sort(); 
-      
       unique.forEach(val => { 
-          const opt = document.createElement('option'); 
-          opt.value = val; 
-          if(idx === 5 && completedFeeders.includes(val)) { 
-              opt.innerText = val + " (✅ Done)"; 
-              opt.disabled = true; 
-          } else {
-              opt.innerText = val; 
-          }
-          sel.appendChild(opt); 
+          const opt = document.createElement('option'); opt.value = val; 
+          if(idx === 5 && completedFeeders.includes(val)) { opt.innerText = val + " (✅ Done)"; opt.disabled = true; } 
+          else { opt.innerText = val; } sel.appendChild(opt); 
       }); 
   }
 
@@ -516,113 +512,65 @@
       if(level === 'subdiv') { populateSelect('sel-substn', 4, [vals[0], vals[1], vals[2], vals[3]]); clearSelects(['sel-feeder']); } 
       if(level === 'substn') { populateSelect('sel-feeder', 5, [vals[0], vals[1], vals[2], vals[3], vals[4]]); } 
   }
-  
   function clearSelects(ids) { ids.forEach(id => document.getElementById(id).innerHTML = '<option value="">Select...</option>'); }
 
   // ==========================================
-  // QC WORKFLOW & HIERARCHICAL FILTERING LOGIC
+  // QC WORKFLOW
   // ==========================================
-
   async function fetchQCData() {
     showLoader("Fetching Pending Validations...");
     const res = await apiCall({ action: 'getQCData', empCode: document.getElementById('activeEmpCode').value });
     hideLoader();
     if(res.status === 'success') { qcDataList = res.data; applyQCFilters(); }
-    else alert("Failed to fetch QC Data. Unauthorized.");
+    else alert("Failed to fetch QC Data.");
   }
 
   function qcFilterChanged(level) {
       const z = document.getElementById('qc-filter-zone').value;
       const c = document.getElementById('qc-filter-circle').value;
       const d = document.getElementById('qc-filter-div').value;
-      
-      if(level === 'zone') {
-          populateQCSelect('qc-filter-circle', 1, [z]);
-          clearQCSelects(['qc-filter-div', 'qc-filter-subdiv']);
-      } else if(level === 'circle') {
-          populateQCSelect('qc-filter-div', 2, [z, c]);
-          clearQCSelects(['qc-filter-subdiv']);
-      } else if(level === 'div') {
-          populateQCSelect('qc-filter-subdiv', 3, [z, c, d]);
-      }
+      if(level === 'zone') { populateQCSelect('qc-filter-circle', 1, [z]); clearQCSelects(['qc-filter-div', 'qc-filter-subdiv']); } 
+      else if(level === 'circle') { populateQCSelect('qc-filter-div', 2, [z, c]); clearQCSelects(['qc-filter-subdiv']); } 
+      else if(level === 'div') { populateQCSelect('qc-filter-subdiv', 3, [z, c, d]); }
       applyQCFilters();
   }
 
   function populateQCSelect(id, idx, filters) {
       const sel = document.getElementById(id); const firstOpt = sel.options[0].text;
       sel.innerHTML = `<option value="">${firstOpt}</option>`;
-      if(!masterData.length) return;
       const filtered = masterData.filter(r => filters.every((v, i) => !v || r[i] === v));
       const unique = [...new Set(filtered.map(r => r[idx]))].sort();
       unique.forEach(val => { if(val) sel.innerHTML += `<option value="${val}">${val}</option>`; });
   }
 
-  function clearQCSelects(ids) {
-      ids.forEach(id => { const sel = document.getElementById(id); sel.innerHTML = `<option value="">${sel.options[0].text}</option>`; });
-  }
+  function clearQCSelects(ids) { ids.forEach(id => { const sel = document.getElementById(id); sel.innerHTML = `<option value="">${sel.options[0].text}</option>`; }); }
 
   function applyQCFilters() {
       const z = document.getElementById('qc-filter-zone').value;
       const c = document.getElementById('qc-filter-circle').value;
       const d = document.getElementById('qc-filter-div').value;
       const sd = document.getElementById('qc-filter-subdiv').value;
-
-      // [+] NEW: Search and Date Ranges
       const searchTxt = (document.getElementById('qc-filter-search').value || '').toLowerCase().trim();
-      const dateFromVal = document.getElementById('qc-filter-date-from').value;
-      const dateToVal = document.getElementById('qc-filter-date-to').value;
+      const dFrom = document.getElementById('qc-filter-date-from').value ? new Date(document.getElementById('qc-filter-date-from').value).setHours(0,0,0,0) : null;
+      const dTo = document.getElementById('qc-filter-date-to').value ? new Date(document.getElementById('qc-filter-date-to').value).setHours(23,59,59,999) : null;
 
-      let dFrom = dateFromVal ? new Date(dateFromVal) : null;
-      if (dFrom) dFrom.setHours(0,0,0,0); // Start of day
-      
-      let dTo = dateToVal ? new Date(dateToVal) : null;
-      if (dTo) dTo.setHours(23,59,59,999); // End of day
-
-      const filteredData = qcDataList.filter(r => {
-          // 1. Hierarchy Match
+      const filtered = qcDataList.filter(r => {
           const matchLoc = (!z || r.zone === z) && (!c || r.circle === c) && (!d || r.division === d) && (!sd || r.subdiv === sd);
-          
-          // 2. Search Text Match (Feeder, Name, or Emp Code)
-          let matchSearch = true;
-          if (searchTxt) {
-              const fStr = String(r.feeder || '').toLowerCase();
-              const nStr = String(r.uploaderName || '').toLowerCase();
-              const cStr = String(r.uploaderEmpCode || '').toLowerCase();
-              matchSearch = fStr.includes(searchTxt) || nStr.includes(searchTxt) || cStr.includes(searchTxt);
-          }
-
-          // 3. Date Range Match
-          let matchDate = true;
-          if (dFrom || dTo) {
-              const rDate = new Date(r.date);
-              if (dFrom && rDate < dFrom) matchDate = false;
-              if (dTo && rDate > dTo) matchDate = false;
-          }
-
+          const matchSearch = !searchTxt || (r.feeder+r.uploaderName+r.uploaderEmpCode).toLowerCase().includes(searchTxt);
+          let matchDate = true; const rDate = new Date(r.date);
+          if (dFrom && rDate < dFrom) matchDate = false;
+          if (dTo && rDate > dTo) matchDate = false;
           return matchLoc && matchSearch && matchDate;
       });
-      
-      renderQCList(filteredData);
+      renderQCList(filtered);
   }
 
-  function renderQCList(dataToRender = qcDataList) {
-    const tbody = document.getElementById('qcListBody');
-    tbody.innerHTML = '';
-    
-    if(dataToRender.length === 0) { 
-        tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted"><i class="bi bi-search fs-3 d-block"></i> No pending validations match your search/filter.</td></tr>`; 
-        return; 
-    }
-
+  function renderQCList(dataToRender) {
+    const tbody = document.getElementById('qcListBody'); tbody.innerHTML = '';
+    if(dataToRender.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">No pending validations match.</td></tr>`; return; }
     dataToRender.forEach(record => {
        const tr = document.createElement('tr');
-       const shortDate = new Date(record.date).toLocaleDateString();
-       tr.innerHTML = `
-          <td><strong>${record.feeder}</strong><br><span class="text-muted" style="font-size:0.7rem">${record.division}</span></td>
-          <td style="font-size:0.75rem">${record.uploaderName}<br>${record.uploaderEmpCode}</td>
-          <td style="font-size:0.75rem">${shortDate}</td>
-          <td><button class="btn btn-warning text-dark btn-qc-view shadow-sm" onclick="openQCForm(${record.rowIdx})">Review</button></td>
-       `;
+       tr.innerHTML = `<td><strong>${record.feeder}</strong><br><small>${record.division}</small></td><td>${record.uploaderName}<br>${record.uploaderEmpCode}</td><td>${new Date(record.date).toLocaleDateString()}</td><td><button class="btn btn-warning btn-qc-view" onclick="openQCForm(${record.rowIdx})">Review</button></td>`;
        tbody.appendChild(tr);
     });
   }
@@ -630,537 +578,162 @@
   function openQCForm(rowIdx) {
      const record = qcDataList.find(r => r.rowIdx === rowIdx);
      if(!record) return;
-     document.getElementById('qcListView').style.display = 'none';
-     document.getElementById('qcEditView').style.display = 'block';
-     
-     document.getElementById('qc-rowIdx').value = record.rowIdx;
-     document.getElementById('qc-oldSignUrl').value = record.signUrl;
-     document.getElementById('qc-oldSldUrl').value = record.sldUrl;
-     document.getElementById('qc-feederName').value = record.feeder;
+     document.getElementById('qcListView').style.display = 'none'; document.getElementById('qcEditView').style.display = 'block';
+     document.getElementById('qc-rowIdx').value = record.rowIdx; document.getElementById('qc-oldSignUrl').value = record.signUrl;
+     document.getElementById('qc-oldSldUrl').value = record.sldUrl; document.getElementById('qc-feederName').value = record.feeder;
      qcPayload = { signoffBase64: null, sldBase64: null };
-
-     document.getElementById('qc-location-details').innerHTML = `
-        <strong>Zone:</strong> ${record.zone} &nbsp;|&nbsp; <strong>Circle:</strong> ${record.circle} &nbsp;|&nbsp; <strong>Division:</strong> ${record.division}<br>
-        <strong>SubDiv:</strong> ${record.subdiv} &nbsp;|&nbsp; <strong>Substation:</strong> ${record.substation}<br>
-        <strong class="text-primary mt-1 d-block">Feeder: ${record.feeder}</strong>
-     `;
-
+     document.getElementById('qc-location-details').innerHTML = `<strong>Zone:</strong> ${record.zone} | <strong>Div:</strong> ${record.division}<br><strong class="text-primary">Feeder: ${record.feeder}</strong>`;
      document.querySelectorAll('.qc-kva-scope-in').forEach(i => i.value = '0');
      document.getElementById('qc-cap_ptw').value = record.ptwCount || 0;
-     try { 
-         const scopeArr = JSON.parse(record.scopeJSON || "[]"); 
-         scopeArr.forEach(item => { const inp = document.getElementById(`qc-cap_${item.k}`); if(inp) inp.value = item.v; }); 
-     } catch(e){}
-
+     try { JSON.parse(record.scopeJSON || "[]").forEach(item => { const inp = document.getElementById(`qc-cap_${item.k}`); if(inp) inp.value = item.v; }); } catch(e){}
      document.getElementById('qc-in-installed').value = record.totalInstalled || 0;
      document.getElementById('qc-in-cableReq').value = record.cableReq || 0;
      qcCalculateScope();
-
-     document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.value = '');
-     document.querySelectorAll('.qc-cable-len').forEach(i => i.value = '');
-     try {
-        const cableArr = JSON.parse(record.cableJSON || "[]");
-        cableArr.forEach(item => {
-           document.querySelector(`.qc-cable-dt-count[data-kva="${item.k}"]`).value = item.c;
-           document.querySelector(`.qc-cable-len[data-kva="${item.k}"]`).value = item.l;
-        });
-     } catch(e){}
+     document.querySelectorAll('.qc-cable-dt-count, .qc-cable-len').forEach(i => i.value = '');
+     try { JSON.parse(record.cableJSON || "[]").forEach(item => { document.querySelector(`.qc-cable-dt-count[data-kva="${item.k}"]`).value = item.c; document.querySelector(`.qc-cable-len[data-kva="${item.k}"]`).value = item.l; }); } catch(e){}
      qcValidateTable();
-
-     document.getElementById('qc-link-sign').href = record.signUrl;
-     document.getElementById('qc-link-sld').href = record.sldUrl;
+     document.getElementById('qc-link-sign').href = record.signUrl; document.getElementById('qc-link-sld').href = record.sldUrl;
   }
 
-  function closeQCForm() { 
-      document.getElementById('qcEditView').style.display = 'none'; 
-      document.getElementById('qcListView').style.display = 'block'; 
-  }
-  
-  // --- QC DYNAMIC DOM RENDERERS ---
-  
+  function closeQCForm() { document.getElementById('qcEditView').style.display = 'none'; document.getElementById('qcListView').style.display = 'block'; }
+
   function renderQCKvaInputs() { 
       const container = document.getElementById('qcKvaInputs'); 
-      if (!container) return; 
-      let html = ''; 
-      KVA_LIST.forEach(k => { 
-          html += `<div class="col-3"><div class="text-center"><label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label><input type="number" class="form-control text-center p-1 qc-kva-scope-in" name="cap_${k}" id="qc-cap_${k}" value="0" min="0" oninput="qcCalculateScope()"></div></div>`; 
-      }); 
-      container.innerHTML += html; 
+      KVA_LIST.forEach(k => { container.innerHTML += `<div class="col-3"><div class="text-center"><label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label><input type="number" class="form-control text-center p-1 qc-kva-scope-in" name="cap_${k}" id="qc-cap_${k}" value="0" min="0" oninput="qcCalculateScope()"></div></div>`; }); 
   }
   
   function renderQCCableTableRows() { 
       const tbody = document.getElementById('qcCableTableBody'); 
-      if (!tbody) return; 
-      let html = ''; 
       KVA_LIST.forEach(k => { 
           const isHidden = k >= 750 ? 'hidden-row high-cap' : ''; 
-          html += `<tr class="bg-white ${isHidden}"><td class="fw-bold">${k}</td><td><input type="number" class="qc-cable-dt-count" data-kva="${k}" oninput="qcValidateTable()"></td><td><input type="number" class="qc-cable-dt-mirror" id="qc-mirror-${k}" readonly style="background:#eee;"></td><td><input type="text" value="${CABLE_MAP[k]}" readonly style="width:100%; text-align:center; border:none; background:transparent;"></td><td><input type="number" class="qc-cable-len" data-kva="${k}" oninput="qcValidateTable()"></td><td class="fw-bold small qc-cable-avg" id="qc-avg-${k}">0</td></tr>`; 
+          tbody.innerHTML += `<tr class="bg-white ${isHidden}"><td class="fw-bold">${k}</td><td><input type="number" class="qc-cable-dt-count" data-kva="${k}" oninput="qcValidateTable()"></td><td><input type="number" class="qc-cable-dt-mirror" id="qc-mirror-${k}" readonly style="background:#eee;"></td><td><input type="text" value="${CABLE_MAP[k]}" readonly style="border:none; background:transparent; width:100%; text-align:center;"></td><td><input type="number" class="qc-cable-len" data-kva="${k}" oninput="qcValidateTable()"></td><td class="fw-bold small qc-cable-avg" id="qc-avg-${k}">0</td></tr>`; 
       }); 
-      tbody.innerHTML = html; 
   }
 
   function qcCalculateScope() {
-    let sumScope = 0; 
-    document.querySelectorAll('.qc-kva-scope-in').forEach(el => sumScope += Number(el.value || 0)); 
+    let sumScope = 0; document.querySelectorAll('.qc-kva-scope-in').forEach(el => sumScope += Number(el.value || 0)); 
     const ptw = Number(document.getElementById('qc-cap_ptw').value || 0);
-    
-    document.getElementById('qc-out-totalScope').value = sumScope; 
-    document.getElementById('qc-out-notInScope').value = ptw;
-    
+    document.getElementById('qc-out-totalScope').value = sumScope; document.getElementById('qc-out-notInScope').value = ptw;
     const installed = Number(document.getElementById('qc-in-installed').value || 0); 
-    const balance = Math.max(0, sumScope - ptw - installed); 
-    document.getElementById('qc-out-balanceScope').value = balance;
-    
+    const balance = Math.max(0, sumScope - ptw - installed); document.getElementById('qc-out-balanceScope').value = balance;
     const cableReq = Number(document.getElementById('qc-in-cableReq').value || 0); 
     const cableInput = document.getElementById('qc-in-cableReq');
-    
-    if (cableReq > balance) { 
-        cableInput.classList.add('val-error'); 
-        document.getElementById('qc-err-cableReq').innerText = `Max: ${balance}`; 
-    } else { 
-        cableInput.classList.remove('val-error'); 
-        document.getElementById('qc-err-cableReq').innerText = ""; 
-    }
-    
-    const woCable = Math.max(0, balance - cableReq); 
-    document.getElementById('qc-in-withoutCable').value = woCable;
-    
-    const tableSec = document.getElementById('qcCableDetailsSection'); 
-    
-    // [+] BUG FIX: Clear hidden errors when Cable Req drops to 0
-    if(cableReq > 0 && !cableInput.classList.contains('val-error')) { 
-        tableSec.style.display = 'block'; 
-        qcValidateTable(); 
-    } else {
-        tableSec.style.display = 'none';
-        // Erase any background validation errors so they do not block submission
-        document.querySelectorAll('#qcCableDetailsSection .val-error').forEach(el => el.classList.remove('val-error'));
-        const errDiv = document.getElementById('qc-tbl-error-msg');
-        if(errDiv) errDiv.innerText = "";
-    }
+    if (cableReq > balance) { cableInput.classList.add('val-error'); document.getElementById('qc-err-cableReq').innerText = `Max: ${balance}`; } 
+    else { cableInput.classList.remove('val-error'); document.getElementById('qc-err-cableReq').innerText = ""; }
+    document.getElementById('qc-in-withoutCable').value = Math.max(0, balance - cableReq);
+    document.getElementById('qcCableDetailsSection').style.display = (cableReq > 0 && !cableInput.classList.contains('val-error')) ? 'block' : 'none';
+    qcValidateTable();
   }
 
   function qcValidateTable() {
-    const globalLimit = Number(document.getElementById('qc-in-cableReq').value || 0); 
-    let currentSum = 0; 
-    let lenSum = 0;
-    
+    const limit = Number(document.getElementById('qc-in-cableReq').value || 0); let current = 0, lens = 0;
     document.querySelectorAll('.qc-cable-dt-count').forEach(input => {
-        const count = Number(input.value || 0); 
-        const kva = input.getAttribute('data-kva'); 
-        const lenInput = document.querySelector(`.qc-cable-len[data-kva="${kva}"]`); 
-        const totalLen = Number(lenInput.value || 0); 
-        const avgDisplay = document.getElementById(`qc-avg-${kva}`);
-        
-        document.getElementById(`qc-mirror-${kva}`).value = count; 
-        currentSum += count; 
-        lenSum += totalLen;
-        
-        const maxLen = count * 34; 
-        const avg = count > 0 ? (totalLen / count).toFixed(1) : 0;
-        
-        if (totalLen > maxLen) { 
-            lenInput.classList.add('val-error'); 
-            avgDisplay.innerHTML = `<span class="text-danger">${avg}</span><div style="font-size:0.6rem; color:red;">Max 34m/DT</div>`; 
-        } else { 
-            lenInput.classList.remove('val-error'); 
-            avgDisplay.innerHTML = (count > 0 && totalLen > 0) ? `<span class="text-success">${avg}</span>` : "0"; 
-        }
+        const count = Number(input.value || 0), kva = input.getAttribute('data-kva');
+        const lIn = document.querySelector(`.qc-cable-len[data-kva="${kva}"]`), totalL = Number(lIn.value || 0);
+        document.getElementById(`qc-mirror-${kva}`).value = count; current += count; lens += totalL;
+        const avg = count > 0 ? (totalL / count).toFixed(1) : 0;
+        if (totalL > count * 34) { lIn.classList.add('val-error'); document.getElementById(`qc-avg-${kva}`).innerHTML = `<span class="text-danger">${avg}</span>`; }
+        else { lIn.classList.remove('val-error'); document.getElementById(`qc-avg-${kva}`).innerHTML = count > 0 ? `<span class="text-success">${avg}</span>` : "0"; }
     });
-    
-    document.getElementById('qc-tbl-sum-count').innerText = currentSum; 
-    document.getElementById('qc-tbl-sum-len').innerText = lenSum;
-    
-    const errDiv = document.getElementById('qc-tbl-error-msg');
-    if (currentSum !== globalLimit) { 
-        errDiv.innerText = `Total (${currentSum}) must equal Cable Req (${globalLimit})`; 
-        document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.classList.add('val-error')); 
-    } else { 
-        errDiv.innerText = ""; 
-        document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.classList.remove('val-error')); 
-    }
+    document.getElementById('qc-tbl-sum-count').innerText = current; document.getElementById('qc-tbl-sum-len').innerText = lens;
+    const err = document.getElementById('qc-tbl-error-msg');
+    if (current !== limit) { err.innerText = `Total (${current}) must match Req (${limit})`; document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.classList.add('val-error')); }
+    else { err.innerText = ""; document.querySelectorAll('.qc-cable-dt-count').forEach(i => i.classList.remove('val-error')); }
   }
 
   async function submitQCData() {
-      if(document.querySelector('#qcEditView .val-error')) return alert("Please fix validation errors before approving.");
-      
+      if(document.querySelector('#qcEditView .val-error')) return alert("Fix errors.");
       const globalReq = Number(document.getElementById('qc-in-cableReq').value || 0); 
-      let tableSum = 0; 
-      
-      // [+] BUG FIX: Only test the table sum if Cable Req > 0
-      if (globalReq > 0) {
-          document.querySelectorAll('.qc-cable-dt-count').forEach(el => tableSum += Number(el.value || 0));
-          if (tableSum !== globalReq) return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`);
-      }
-      
-      const scopeArray = []; 
-      document.querySelectorAll('.qc-kva-scope-in').forEach(input => { 
-          const val = Number(input.value || 0); 
-          if (val > 0) scopeArray.push({ k: input.name.replace('cap_', ''), v: val }); 
-      });
-      
-      const cableDetailsArray = []; 
-      const cableSummaryArray = []; 
-      
-      // [+] BUG FIX: Only pull cable JSON data if Cable Req > 0
-      if (globalReq > 0) {
-          document.querySelectorAll('.qc-cable-dt-count').forEach(input => { 
-              const count = Number(input.value || 0); 
-              if(count > 0) { 
-                  const kva = input.getAttribute('data-kva'); 
-                  const totalLen = Number(document.querySelector(`.qc-cable-len[data-kva="${kva}"]`).value || 0); 
-                  cableDetailsArray.push({ k: kva, c: count, s: CABLE_MAP[kva], l: totalLen }); 
-                  cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`); 
-              } 
-          });
-      }
-
-      const data = {
-          action: 'submitQC', 
-          qcName: document.getElementById('displayUserName').innerText, 
-          qcCode: document.getElementById('activeEmpCode').value,
-          rowIdx: document.getElementById('qc-rowIdx').value, 
-          feeder: document.getElementById('qc-feederName').value, 
-          oldSignUrl: document.getElementById('qc-oldSignUrl').value, 
-          oldSldUrl: document.getElementById('qc-oldSldUrl').value,
-          totalScope: document.getElementById('qc-out-totalScope').value, 
-          totalInstalled: document.getElementById('qc-in-installed').value, 
-          balanceScope: document.getElementById('qc-out-balanceScope').value, 
-          notInScope: document.getElementById('qc-out-notInScope').value, 
-          cableReq: document.getElementById('qc-in-cableReq').value, 
-          withoutCable: document.getElementById('qc-in-withoutCable').value, 
-          ptwCount: document.getElementById('qc-cap_ptw').value,
-          scopeJSON: scopeArray.length > 0 ? JSON.stringify(scopeArray) : "[]", 
-          cableSummary: cableSummaryArray.length > 0 ? cableSummaryArray.join(" | ") : "None", 
-          cableJSON: cableDetailsArray.length > 0 ? JSON.stringify(cableDetailsArray) : "[]", 
-          signoffBase64: qcPayload.signoffBase64, 
-          sldBase64: qcPayload.sldBase64
-      };
-      
-      showLoader("Approving..."); 
-      const res = await apiCall(data); 
-      hideLoader();
-      
-      if(res.status === 'success') { 
-          alert("Record Successfully Verified and Approved!"); 
-          fetchQCData(); 
-          closeQCForm(); 
-      } else {
-          alert("Error: " + res.message);
-      }
+      let tableSum = 0; if (globalReq > 0) { document.querySelectorAll('.qc-cable-dt-count').forEach(el => tableSum += Number(el.value || 0)); if (tableSum !== globalReq) return alert("Sum mismatch."); }
+      const scopeArray = []; document.querySelectorAll('.qc-kva-scope-in').forEach(input => { const v = Number(input.value || 0); if (v > 0) scopeArray.push({ k: input.name.replace('cap_', ''), v: v }); });
+      const cableArray = [], cableSummary = []; 
+      if (globalReq > 0) { document.querySelectorAll('.qc-cable-dt-count').forEach(input => { const c = Number(input.value || 0); if(c > 0) { const k = input.getAttribute('data-kva'), l = Number(document.querySelector(`.qc-cable-len[data-kva="${k}"]`).value || 0); cableArray.push({ k: k, c: c, s: CABLE_MAP[k], l: l }); cableSummary.push(`${k}KVA: ${c} (${l}m)`); } }); }
+      showLoader("Approving...");
+      const res = await apiCall({ action: 'submitQC', qcName: document.getElementById('displayUserName').innerText, qcCode: document.getElementById('activeEmpCode').value, rowIdx: document.getElementById('qc-rowIdx').value, feeder: document.getElementById('qc-feederName').value, oldSignUrl: document.getElementById('qc-oldSignUrl').value, oldSldUrl: document.getElementById('qc-oldSldUrl').value, totalScope: document.getElementById('qc-out-totalScope').value, totalInstalled: document.getElementById('qc-in-installed').value, balanceScope: document.getElementById('qc-out-balanceScope').value, notInScope: document.getElementById('qc-out-notInScope').value, cableReq: document.getElementById('qc-in-cableReq').value, withoutCable: document.getElementById('qc-in-withoutCable').value, ptwCount: document.getElementById('qc-cap_ptw').value, scopeJSON: JSON.stringify(scopeArray), cableSummary: cableSummary.join(" | ") || "None", cableJSON: JSON.stringify(cableArray), signoffBase64: qcPayload.signoffBase64, sldBase64: qcPayload.sldBase64 });
+      hideLoader(); if(res.status === 'success') { alert("Approved!"); fetchQCData(); closeQCForm(); } else alert(res.message);
   }
 
   // ==========================================
-  // EXISTING SLD DOM RENDERERS (User View)
+  // USER VIEW DOM RENDERERS
   // ==========================================
-  
   function renderKvaInputs() { 
       const container = document.getElementById('kvaInputs'); 
-      if (!container) return; 
-      let html = ''; 
-      KVA_LIST.forEach(k => { 
-          html += `<div class="col-3"><div class="text-center"><label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label><input type="number" class="form-control text-center p-1 kva-scope-in" name="cap_${k}" id="cap_${k}" value="0" min="0" oninput="calculateScope()"></div></div>`; 
-      }); 
-      container.innerHTML += html; 
+      KVA_LIST.forEach(k => { container.innerHTML += `<div class="col-3"><div class="text-center"><label class="small text-muted d-block" style="font-size:0.7rem;">${k}</label><input type="number" class="form-control text-center p-1 kva-scope-in" name="cap_${k}" id="cap_${k}" value="0" min="0" oninput="calculateScope()"></div></div>`; }); 
   }
-  
   function renderCableTableRows() { 
       const tbody = document.getElementById('cableTableBody'); 
-      if (!tbody) return; 
-      let html = ''; 
       KVA_LIST.forEach(k => { 
           const isHidden = k >= 750 ? 'hidden-row high-cap' : ''; 
-          html += `<tr class="bg-white ${isHidden}"><td class="fw-bold">${k}</td><td><input type="number" class="cable-dt-count" data-kva="${k}" placeholder="0" oninput="validateTable()"></td><td><input type="number" class="cable-dt-mirror" id="mirror-${k}" placeholder="0" readonly style="background:#eee;"></td><td><input type="text" class="cable-size" value="${CABLE_MAP[k]}" readonly style="width:100%; text-align:center; border:none; background:transparent;"></td><td><input type="number" class="cable-len" data-kva="${k}" placeholder="0" oninput="validateTable()"></td><td class="fw-bold small cable-avg" id="avg-${k}">0</td></tr>`; 
+          tbody.innerHTML += `<tr class="bg-white ${isHidden}"><td class="fw-bold">${k}</td><td><input type="number" class="cable-dt-count" data-kva="${k}" oninput="validateTable()"></td><td><input type="number" class="cable-dt-mirror" id="mirror-${k}" readonly style="background:#eee;"></td><td><input type="text" value="${CABLE_MAP[k]}" readonly style="border:none; background:transparent; width:100%; text-align:center;"></td><td><input type="number" class="cable-len" data-kva="${k}" oninput="validateTable()"></td><td class="fw-bold small cable-avg" id="avg-${k}">0</td></tr>`; 
       }); 
-      tbody.innerHTML = html; 
   }
-  
-  function toggleHighCapacity() { 
-      document.querySelectorAll('.high-cap').forEach(el => el.classList.toggle('hidden-row')); 
-      const btn = document.querySelector('.show-more-btn'); 
-      if (btn) { 
-          btn.innerHTML = btn.innerHTML.includes('Show') ? '<i class="bi bi-chevron-up"></i> Show less rating' : '<i class="bi bi-chevron-down"></i> Show more rating'; 
-      } 
+  function toggleHighCapacity() { document.querySelectorAll('.high-cap').forEach(el => el.classList.toggle('hidden-row')); const btn = document.querySelector('.show-more-btn'); btn.innerHTML = btn.innerHTML.includes('Show') ? '<i class="bi bi-chevron-up"></i> Less' : '<i class="bi bi-chevron-down"></i> More'; }
+
+  function calculateScope() {
+      let sum = 0; document.querySelectorAll('.kva-scope-in').forEach(el => sum += Number(el.value || 0));
+      const ptw = Number(document.getElementById('cap_ptw').value || 0), inst = Number(document.getElementById('in-installed').value || 0);
+      document.getElementById('out-totalScope').value = sum; document.getElementById('out-notInScope').value = ptw;
+      const bal = Math.max(0, sum - ptw - inst); document.getElementById('out-balanceScope').value = bal;
+      const cReq = Number(document.getElementById('in-cableReq').value || 0), cIn = document.getElementById('in-cableReq');
+      if (cReq > bal) { cIn.classList.add('val-error'); document.getElementById('err-cableReq').innerText = `Max: ${bal}`; }
+      else { cIn.classList.remove('val-error'); document.getElementById('err-cableReq').innerText = ""; }
+      document.getElementById('in-withoutCable').value = Math.max(0, bal - cReq);
+      document.getElementById('cableDetailsSection').style.display = (cReq > 0 && !cIn.classList.contains('val-error')) ? 'block' : 'none';
+      validateTable();
+  }
+
+  function validateTable() {
+      const limit = Number(document.getElementById('in-cableReq').value || 0); let cur = 0, lens = 0;
+      document.querySelectorAll('.cable-dt-count').forEach(input => {
+          const c = Number(input.value || 0), k = input.getAttribute('data-kva'), lIn = document.querySelector(`.cable-len[data-kva="${k}"]`), tl = Number(lIn.value || 0);
+          document.getElementById(`mirror-${k}`).value = c; cur += c; lens += tl;
+          const avg = c > 0 ? (tl / c).toFixed(1) : 0;
+          if (tl > c * 34) { lIn.classList.add('val-error'); document.getElementById(`avg-${k}`).innerHTML = `<span class="text-danger">${avg}</span>`; }
+          else { lIn.classList.remove('val-error'); document.getElementById(`avg-${k}`).innerHTML = c > 0 ? `<span class="text-success">${avg}</span>` : "0"; }
+      });
+      document.getElementById('tbl-sum-count').innerText = cur; document.getElementById('tbl-sum-len').innerText = lens;
+      const err = document.getElementById('tbl-error-msg');
+      if (cur !== limit) { err.innerText = `Table (${cur}) vs Req (${limit})`; document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.add('val-error')); }
+      else { err.innerText = ""; document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.remove('val-error')); }
+  }
+
+  async function submitForm() {
+      const form = document.getElementById('mainForm'); if (!form.zone.value || !form.feeder.value) return alert("Select location.");
+      if(document.querySelector('.val-error')) return alert("Fix errors."); if(!payload.signoffBase64 || !payload.sldBase64) return alert("Images missing.");
+      const cReq = Number(document.getElementById('in-cableReq').value || 0); let tSum = 0;
+      if (cReq > 0) { document.querySelectorAll('.cable-dt-count').forEach(el => tSum += Number(el.value || 0)); if (tSum !== cReq) return alert("Sum error."); }
+      const sArr = [], cArr = [], cSum = [];
+      document.querySelectorAll('.kva-scope-in').forEach(i => { const v = Number(i.value || 0); if(v > 0) sArr.push({ k: i.name.replace('cap_', ''), v: v }); });
+      if (cReq > 0) { document.querySelectorAll('.cable-dt-count').forEach(i => { const c = Number(i.value || 0); if(c > 0) { const k = i.getAttribute('data-kva'), l = Number(document.querySelector(`.cable-len[data-kva="${k}"]`).value || 0); cArr.push({ k: k, c: c, s: CABLE_MAP[k], l: l }); cSum.push(`${k}KVA: ${c} (${l}m)`); } }); }
+      showLoader("Submitting...");
+      const res = await apiCall({ action: 'submit', uploaderName: document.getElementById('uploaderName').value, uploaderEmpCode: document.getElementById('activeEmpCode').value, zone: form.zone.value, circle: form.circle.value, division: form.division.value, subdiv: form.subdiv.value, substation: form.substation.value, feeder: form.feeder.value, totalScope: document.getElementById('out-totalScope').value, totalInstalled: document.getElementById('in-installed').value, balanceScope: document.getElementById('out-balanceScope').value, notInScope: document.getElementById('out-notInScope').value, cableReq: document.getElementById('in-cableReq').value, withoutCable: document.getElementById('in-withoutCable').value, ptwCount: document.getElementById('cap_ptw').value, scopeJSON: JSON.stringify(sArr), cableSummary: cSum.join(" | ") || "None", cableJSON: JSON.stringify(cArr), signoffBase64: payload.signoffBase64, sldBase64: payload.sldBase64 });
+      hideLoader(); if(res.status === 'success') { alert("Success!"); location.reload(); } else alert(res.message);
   }
 
   // ==========================================
-  // EXISTING FORM PROCESSING (User View)
+  // ADMIN & STATUS
   // ==========================================
-  
-  function calculateScope() { 
-      let sumScope = 0; 
-      document.querySelectorAll('.kva-scope-in').forEach(el => sumScope += Number(el.value || 0)); 
-      const ptw = Number(document.getElementById('cap_ptw').value || 0); 
-      
-      document.getElementById('out-totalScope').value = sumScope; 
-      document.getElementById('out-notInScope').value = ptw; 
-      
-      const installed = Number(document.getElementById('in-installed').value || 0); 
-      const balance = Math.max(0, sumScope - ptw - installed); 
-      document.getElementById('out-balanceScope').value = balance; 
-      
-      const cableReq = Number(document.getElementById('in-cableReq').value || 0); 
-      const cableInput = document.getElementById('in-cableReq'); 
-      
-      if (cableReq > balance) { 
-          cableInput.classList.add('val-error'); 
-          document.getElementById('err-cableReq').innerText = `Max allowed: ${balance}`; 
-      } else { 
-          cableInput.classList.remove('val-error'); 
-          document.getElementById('err-cableReq').innerText = ""; 
-      } 
-      
-      const woCable = Math.max(0, balance - cableReq); 
-      document.getElementById('in-withoutCable').value = woCable; 
-      
-      const tableSec = document.getElementById('cableDetailsSection'); 
-      
-      // [+] BUG FIX APPLIED HERE AS WELL
-      if(cableReq > 0 && !cableInput.classList.contains('val-error')) { 
-          tableSec.style.display = 'block'; validateTable(); 
-      } else {
-          tableSec.style.display = 'none'; 
-          document.querySelectorAll('#cableDetailsSection .val-error').forEach(el => el.classList.remove('val-error'));
-          const errDiv = document.getElementById('tbl-error-msg');
-          if(errDiv) errDiv.innerText = "";
-      }
-  }
-  
-  function validateTable() { 
-      const globalLimit = Number(document.getElementById('in-cableReq').value || 0); 
-      let currentSum = 0; let lenSum = 0; 
-      
-      document.querySelectorAll('.cable-dt-count').forEach(input => { 
-          const count = Number(input.value || 0); 
-          const kva = input.getAttribute('data-kva'); 
-          const lenInput = document.querySelector(`.cable-len[data-kva="${kva}"]`); 
-          const totalLen = Number(lenInput.value || 0); 
-          const avgDisplay = document.getElementById(`avg-${kva}`); 
-          
-          document.getElementById(`mirror-${kva}`).value = count; 
-          currentSum += count; lenSum += totalLen; 
-          
-          const maxLen = count * 34; 
-          const avg = count > 0 ? (totalLen / count).toFixed(1) : 0; 
-          
-          if (totalLen > maxLen) { 
-              lenInput.classList.add('val-error'); 
-              avgDisplay.innerHTML = `<span class="text-danger">${avg}</span><div style="font-size:0.6rem; color:red;">Max 34m/DT</div>`; 
-          } else { 
-              lenInput.classList.remove('val-error'); 
-              avgDisplay.innerHTML = (count > 0 && totalLen > 0) ? `<span class="text-success">${avg}</span>` : "0"; 
-          } 
-      }); 
-      
-      document.getElementById('tbl-sum-count').innerText = currentSum; 
-      document.getElementById('tbl-sum-len').innerText = lenSum; 
-      
-      const errDiv = document.getElementById('tbl-error-msg'); 
-      if (currentSum !== globalLimit) { 
-          errDiv.innerText = `Validation Error: Table Total (${currentSum}) must equal Cable Req (${globalLimit})`; 
-          document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.add('val-error')); 
-      } else { 
-          errDiv.innerText = ""; 
-          document.querySelectorAll('.cable-dt-count').forEach(i => i.classList.remove('val-error')); 
-      } 
-  }
-  
-  async function submitForm() { 
-      const form = document.getElementById('mainForm'); 
-      if (!form.zone.value || !form.circle.value || !form.division.value || !form.subdiv.value || !form.substation.value || !form.feeder.value) return alert("Validation Error: Please select all Location Details."); 
-      if(document.querySelector('.val-error')) return alert("Please fix validation errors."); 
-      if(!payload.signoffBase64 || !payload.sldBase64) return alert("Please upload both images."); 
-      
-      const globalReq = Number(document.getElementById('in-cableReq').value || 0); 
-      let tableSum = 0; 
-      
-      if (globalReq > 0) {
-          document.querySelectorAll('.cable-dt-count').forEach(el => tableSum += Number(el.value || 0)); 
-          if (tableSum !== globalReq) return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`); 
-      }
-      
-      const scopeArray = []; 
-      document.querySelectorAll('.kva-scope-in').forEach(input => { 
-          const val = Number(input.value || 0); 
-          if (val > 0) scopeArray.push({ k: input.name.replace('cap_', ''), v: val }); 
-      }); 
-      
-      const cableDetailsArray = []; 
-      const cableSummaryArray = []; 
-      if (globalReq > 0) {
-          document.querySelectorAll('.cable-dt-count').forEach(input => { 
-              const count = Number(input.value || 0); 
-              if(count > 0) { 
-                  const kva = input.getAttribute('data-kva'); 
-                  const totalLen = Number(document.querySelector(`.cable-len[data-kva="${kva}"]`).value || 0); 
-                  cableDetailsArray.push({ k: kva, c: count, s: CABLE_MAP[kva], l: totalLen }); 
-                  cableSummaryArray.push(`${kva}KVA: ${count} (${totalLen}m)`); 
-              } 
-          }); 
-      }
-      
-      const data = { 
-          action: 'submit', uploaderName: document.getElementById('uploaderName').value, uploaderEmpCode: document.getElementById('activeEmpCode').value, 
-          zone: form.zone.value, circle: form.circle.value, division: form.division.value, subdiv: form.subdiv.value, substation: form.substation.value, feeder: form.feeder.value, 
-          totalScope: document.getElementById('out-totalScope').value, totalInstalled: document.getElementById('in-installed').value, balanceScope: document.getElementById('out-balanceScope').value, 
-          notInScope: document.getElementById('out-notInScope').value, cableReq: document.getElementById('in-cableReq').value, withoutCable: document.getElementById('in-withoutCable').value, ptwCount: document.getElementById('cap_ptw').value, 
-          scopeJSON: scopeArray.length > 0 ? JSON.stringify(scopeArray) : "[]", cableSummary: cableSummaryArray.length > 0 ? cableSummaryArray.join(" | ") : "None", cableJSON: cableDetailsArray.length > 0 ? JSON.stringify(cableDetailsArray) : "[]", 
-          signoffBase64: payload.signoffBase64, sldBase64: payload.sldBase64 
-      }; 
-      
-      showLoader("Submitting..."); 
-      const res = await apiCall(data); 
-      hideLoader(); 
-      
-      if(res.status === 'success') { 
-          alert("Submission Successful!"); location.reload(); 
-      } else {
-          alert("Error: " + res.message);
-      }
-  }
-
-  // ==========================================
-  // ADMIN HANDLERS (With Zone Support)
-  // ==========================================
-  
-  function fetchAdminData() { 
-      document.getElementById('adminMsg').innerText = "Loading users..."; 
-      apiCall({ action: 'getUsersPaginated', adminCode: document.getElementById('activeEmpCode').value, page: adminState.page, limit: adminState.limit, search: adminState.search })
-      .then(res => { 
-          if(res.status === 'success') { 
-              adminState.totalPages = res.data.totalPages; adminState.page = res.data.currentPage; 
-              updatePaginationUI(res.data.totalRecords); renderAdminTable(res.data.users); 
-              document.getElementById('adminMsg').innerText = ""; 
-          } else {
-              document.getElementById('adminMsg').innerText = res.message;
-          }
-      }); 
-  }
-  
-  function toggleAdminZoneInput() { 
-      const r = document.getElementById('n_role').value; 
-      document.getElementById('n_zones_container').style.display = r === 'QC' ? 'block' : 'none'; 
-  }
-  
-  function renderAdminTable(users) { 
-      const tbody = document.getElementById('adminTableBody'); 
-      tbody.innerHTML = ''; 
-      if (users.length === 0) { 
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No users found.</td></tr>'; return; 
-      } 
-      
-      users.forEach(u => { 
-          const isActive = u.status.toLowerCase() === 'active'; 
-          const statusClass = isActive ? 'st-active' : 'st-inactive'; 
-          const isQC = u.role.toLowerCase() === 'qc';
-          const zoneHtml = isQC ? `<div style="font-size:11px; max-width:120px;" class="text-truncate text-muted" title="${u.zones}">${u.zones||'All'}</div><button class="btn btn-link btn-sm p-0 fw-bold" onclick="editUserZones('${u.empCode}', '${u.zones}')">Edit</button>` : '-';
-          
-          const tr = document.createElement('tr'); 
-          tr.innerHTML = `<td style="font-weight:600;">${u.name}<br><span style="font-weight:normal;color:#666;font-size:11px;">${u.designation}</span></td><td style="font-family:monospace;">${u.empCode}</td><td><select class="form-select form-select-sm" onchange="changeUserRole('${u.empCode}', this.value)"><option value="Admin" ${u.role.toLowerCase()==='admin'?'selected':''}>Admin</option><option value="QC" ${u.role.toLowerCase()==='qc'?'selected':''}>QC</option><option value="User" ${u.role.toLowerCase()==='user'?'selected':''}>User</option></select></td><td>${zoneHtml}</td><td><button class="toggle-status ${statusClass}" onclick="toggleUserStatus('${u.empCode}', '${u.status}', this)">${u.status}</button></td><td><button class="btn-small btn-reset" onclick="resetUserPass('${u.empCode}', '${u.name}')">Reset</button></td>`; 
-          tbody.appendChild(tr); 
-      }); 
-  }
-  
-  function updatePaginationUI(total) { document.getElementById('pageInfo').innerText = `Page ${adminState.page} of ${adminState.totalPages} (Total: ${total})`; document.getElementById('btnPrevPage').disabled = adminState.page <= 1; document.getElementById('btnNextPage').disabled = adminState.page >= adminState.totalPages; }
-  function changePage(delta) { const newPage = adminState.page + delta; if(newPage >= 1 && newPage <= adminState.totalPages) { adminState.page = newPage; fetchAdminData(); } }
+  function fetchAdminData() { apiCall({ action: 'getUsersPaginated', adminCode: document.getElementById('activeEmpCode').value, page: adminState.page, limit: adminState.limit, search: adminState.search }).then(res => { if(res.status === 'success') { adminState.totalPages = res.data.totalPages; adminState.page = res.data.currentPage; updatePaginationUI(res.data.totalRecords); renderAdminTable(res.data.users); } }); }
+  function toggleAdminZoneInput() { document.getElementById('n_zones_container').style.display = document.getElementById('n_role').value === 'QC' ? 'block' : 'none'; }
+  function renderAdminTable(users) { const tbody = document.getElementById('adminTableBody'); tbody.innerHTML = ''; users.forEach(u => { const isActive = u.status.toLowerCase() === 'active', sCls = isActive ? 'st-active' : 'st-inactive'; const zHtml = u.role.toLowerCase() === 'qc' ? `<button class="btn btn-link btn-sm p-0" onclick="editUserZones('${u.empCode}', '${u.zones}')">Edit Zones</button>` : '-'; const tr = document.createElement('tr'); tr.innerHTML = `<td><strong>${u.name}</strong><br><small>${u.designation}</small></td><td>${u.empCode}</td><td>${u.role}</td><td>${zHtml}</td><td><button class="toggle-status ${sCls}" onclick="toggleUserStatus('${u.empCode}', '${u.status}', this)">${u.status}</button></td><td><button class="btn-small" onclick="resetUserPass('${u.empCode}', '${u.name}')">Reset</button></td>`; tbody.appendChild(tr); }); }
+  function updatePaginationUI(total) { document.getElementById('pageInfo').innerText = `Page ${adminState.page} of ${adminState.totalPages}`; }
+  function changePage(delta) { const n = adminState.page + delta; if(n >= 1 && n <= adminState.totalPages) { adminState.page = n; fetchAdminData(); } }
   function execSearch() { adminState.search = document.getElementById('searchInput').value.trim(); adminState.page = 1; fetchAdminData(); }
-  function clearSearch() { document.getElementById('searchInput').value = ''; adminState.search = ''; adminState.page = 1; fetchAdminData(); }
+  function clearSearch() { document.getElementById('searchInput').value = ''; adminState.search = ''; execSearch(); }
   
-  window.editUserZones = function(empCode, currentZones) {
-     const newZones = prompt(`Enter comma-separated zones for ${empCode}:\n(e.g., SOUTH ZONE, NORTH ZONE)`, currentZones);
-     if(newZones !== null) {
-         apiCall({ action: 'updateUserZones', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode, zones: newZones })
-         .then(res => { 
-             if(res.status === 'success') { alert("Zones updated."); fetchAdminData(); } 
-             else alert("Failed: " + res.message); 
-         });
-     }
-  }
+  window.editUserZones = (code, cur) => { const n = prompt("Zones (Comma separated):", cur); if(n !== null) apiCall({ action: 'updateUserZones', adminCode: document.getElementById('activeEmpCode').value, empCode: code, zones: n }).then(r => { if(r.status === 'success') { alert("Updated"); fetchAdminData(); } }); };
+  window.addNewUser = () => { const sz = Array.from(document.getElementById('n_zones').selectedOptions).map(o => o.value).join(', '); apiCall({ action: 'createUser', adminCode: document.getElementById('activeEmpCode').value, name: document.getElementById('n_name').value, empCode: document.getElementById('n_code').value.toUpperCase(), mobile: document.getElementById('n_mob').value, designation: document.getElementById('n_desig').value, role: document.getElementById('n_role').value, zones: sz }).then(r => { if(r.status === 'success') { alert("Created"); fetchAdminData(); } }); };
+  window.toggleUserStatus = (c, s, b) => { const n = s.toLowerCase() === 'active' ? 'Inactive' : 'Active'; apiCall({ action: 'updateUserStatus', adminCode: document.getElementById('activeEmpCode').value, empCode: c, status: n }).then(r => { if(r.status === 'success') fetchAdminData(); }); };
+  window.resetUserPass = (c, n) => { if(confirm(`Reset ${n}?`)) apiCall({ action: 'adminResetPassword', adminCode: document.getElementById('activeEmpCode').value, empCode: c }).then(r => { if(r.status === 'success') alert("Reset to Pass@123"); }); };
 
-  window.addNewUser = function() { 
-      const selZones = Array.from(document.getElementById('n_zones').selectedOptions).map(opt => opt.value).join(', ');
-      const p = { action: 'createUser', adminCode: document.getElementById('activeEmpCode').value, name: document.getElementById('n_name').value.trim(), empCode: document.getElementById('n_code').value.trim().toUpperCase(), mobile: document.getElementById('n_mob').value.trim(), designation: document.getElementById('n_desig').value.trim(), role: document.getElementById('n_role').value, zones: selZones }; 
-      
-      if(!p.name || !p.empCode) return document.getElementById('addMsg').innerText = "Name and Emp Code required."; 
-      document.getElementById('addMsg').innerText = "Creating user..."; 
-      
-      apiCall(p).then(res => { 
-          if(res.status === 'success') { 
-              document.getElementById('addMsg').innerText = "Success: User created."; 
-              document.getElementById('addMsg').className = "mt-2 text-success small fw-bold"; 
-              ['n_name','n_code','n_mob','n_desig'].forEach(id=>document.getElementById(id).value=''); 
-              adminState.page = 1; adminState.search = ''; document.getElementById('searchInput').value = ''; fetchAdminData(); 
-          } else { 
-              document.getElementById('addMsg').innerText = res.message; 
-              document.getElementById('addMsg').className = "mt-2 text-danger small fw-bold"; 
-          } 
-      }); 
-  }
-  
-  window.toggleUserStatus = function(empCode, currentStatus, btnElement) { const newStatus = currentStatus.toLowerCase() === 'active' ? 'Inactive' : 'Active'; btnElement.innerText = '...'; apiCall({ action: 'updateUserStatus', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode, status: newStatus }).then(res => { if(res.status === 'success') { btnElement.innerText = newStatus; btnElement.className = `toggle-status ${newStatus==='Active'?'st-active':'st-inactive'}`; btnElement.setAttribute('onclick', `toggleUserStatus('${empCode}', '${newStatus}', this)`); } else { alert("Failed: " + res.message); btnElement.innerText = currentStatus; } }); }
-  window.changeUserRole = function(empCode, newRole) { apiCall({ action: 'updateUserRole', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode, role: newRole }).then(res => { if(res.status !== 'success') alert("Failed: " + res.message); }); }
-  window.resetUserPass = function(empCode, name) { if(!confirm(`Reset password for ${name} to "Pass@123"?`)) return; apiCall({ action: 'adminResetPassword', adminCode: document.getElementById('activeEmpCode').value, empCode: empCode }).then(res => { if(res.status === 'success') alert(`Password for ${name} reset successfully.`); else alert("Failed: " + res.message); }); }
+  function toggleStatView(v) { document.getElementById('viewPendency').style.display = v === 'pendency' ? 'block' : 'none'; document.getElementById('viewUser').style.display = v === 'user' ? 'block' : 'none'; }
+  async function loadStatusData() { showLoader("Analytics..."); const res = await apiCall({ action: 'getStatus', empCode: document.getElementById('activeEmpCode').value, role: document.getElementById('displayUserName').getAttribute('data-role') }); hideLoader(); if (res.status === 'success') { renderPendency(res.data.pendency); renderUserProgress(res.data.userStats); document.getElementById('lastUpdateStats').innerText = res.data.lastUpdate; statusLoaded = true; } }
+  function renderPendency(data) { const c = document.getElementById('pendencyContainer'); let h = '<div class="accordion" id="accStatus">'; data.forEach((z, i) => { const cls = z.pct >= 100 ? 'success' : z.pct >= 50 ? 'warning' : 'danger'; h += `<div class="accordion-item shadow-sm mb-2"><h2 class="accordion-header"><button class="accordion-button collapsed py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${i}"><div class="w-100"><strong>${z.zone}</strong> (${z.pct}%)<div class="progress" style="height:4px;"><div class="progress-bar bg-${cls}" style="width:${z.pct}%"></div></div></div></button></h2><div id="collapse${i}" class="accordion-collapse collapse"><div class="accordion-body p-1"><table class="table table-sm small"><tbody>${z.divisions.map(d => `<tr><td>${d.name}</td><td class="text-end">${d.done}/${d.total}</td></tr>`).join('')}</tbody></table></div></div></div>`; }); c.innerHTML = h + '</div>'; }
+  function renderUserProgress(users) { const c = document.getElementById('userStatsContainer'); let h = ''; users.forEach(u => { h += `<div class="stat-card"><strong>${u.name}</strong> (${u.code})<div class="text-end text-primary fw-bold fs-4">${u.total}</div><div class="small text-muted">Active: ${u.zones}</div></div>`; }); c.innerHTML = h; }
 
-  // ==========================================
-  // GENERIC UI HELPERS
-  // ==========================================
-
-  function showLoader(txt) { document.getElementById('loader').style.display = 'flex'; document.getElementById('loaderText').innerText = txt; }
+  function showLoader(t) { document.getElementById('loader').style.display = 'flex'; document.getElementById('loaderText').innerText = t; }
   function hideLoader() { document.getElementById('loader').style.display = 'none'; }
   function logout() { localStorage.removeItem('sld_creds'); location.reload(); }
-
-  // ==========================================
-  // STATUS DASHBOARD (User Only)
-  // ==========================================
-  
-  function toggleStatView(view) { document.getElementById('viewPendency').style.display = view === 'pendency' ? 'block' : 'none'; document.getElementById('viewUser').style.display = view === 'user' ? 'block' : 'none'; }
-  
-  async function loadStatusData() { 
-      showLoader("Fetching Analytics..."); 
-      const role = document.getElementById('displayUserName').getAttribute('data-role'); 
-      const res = await apiCall({ action: 'getStatus', empCode: document.getElementById('activeEmpCode').value, role: role }); 
-      hideLoader(); 
-      if (res.status === 'success') { 
-          renderPendency(res.data.pendency); 
-          renderUserProgress(res.data.userStats); 
-          document.getElementById('lastUpdateStats').innerText = res.data.lastUpdate; statusLoaded = true; 
-      } else {
-          alert("Failed to load stats");
-      }
-  }
-  
-  function renderPendency(data) { 
-      const container = document.getElementById('pendencyContainer'); 
-      if (!data || data.length === 0) { 
-          container.innerHTML = '<div class="text-center mt-5 text-muted">No Data Available</div>'; return; 
-      } 
-      let html = '<div class="accordion" id="accStatus">'; 
-      data.forEach((zone, idx) => { 
-          const colorClass = getProgColor(zone.pct); 
-          const isExpanded = idx === 0 ? 'show' : ''; 
-          const btnCollapsed = idx === 0 ? '' : 'collapsed'; 
-          html += `<div class="accordion-item border-0 shadow-sm mb-2" style="border-radius:8px; overflow:hidden;"><h2 class="accordion-header"><button class="accordion-button ${btnCollapsed} py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${idx}"><div class="w-100"><div class="d-flex justify-content-between mb-1"><span class="fw-bold">${zone.zone}</span><span class="fw-bold text-${colorClass}">${zone.pct}%</span></div><div class="progress" style="height: 6px;"><div class="progress-bar bg-${colorClass}" style="width: ${zone.pct}%"></div></div><div class="d-flex justify-content-between mt-1 small text-muted"><span>Done: ${zone.done}/${zone.total}</span><span>Pending: ${zone.pending}</span></div></div></button></h2><div id="collapse${idx}" class="accordion-collapse collapse ${isExpanded}" data-bs-parent="#accStatus"><div class="accordion-body bg-light p-2"><table class="table table-sm table-borderless drill-table m-0"><thead><tr class="text-muted border-bottom"><th>Division</th><th class="text-end">Done</th><th class="text-end">Gap</th><th class="text-end">%</th></tr></thead><tbody>${zone.divisions.map(d => `<tr><td>${d.name}</td><td class="text-end fw-bold text-dark">${d.done}</td><td class="text-end text-danger">${d.pending}</td><td class="text-end"><span class="badge bg-${getProgColor(d.pct)}">${d.pct}%</span></td></tr>`).join('')}</tbody></table></div></div></div>`; 
-      }); 
-      container.innerHTML = html + '</div>'; 
-  }
-  
-  function renderUserProgress(users) { 
-      const container = document.getElementById('userStatsContainer'); 
-      if (!users || users.length === 0) { 
-          container.innerHTML = '<div class="text-center mt-4">No submissions found.</div>'; return; 
-      } 
-      let html = ''; 
-      users.forEach(u => { 
-          html += `<div class="stat-card"><div class="d-flex justify-content-between"><div><h6 class="fw-bold mb-0">${u.name}</h6><span class="text-muted small">${u.code}</span></div><div class="text-end"><h3 class="fw-bold text-primary mb-0">${u.total}</h3><small class="text-muted" style="font-size:0.65rem">TOTAL SUBMITS</small></div></div><hr class="my-2 opacity-25"><div class="row text-center" style="font-size:0.8rem;"><div class="col-4 border-end"><div class="fw-bold text-success">${u.today}</div><div class="text-muted small">Today</div></div><div class="col-8"><div class="text-truncate text-dark fw-bold">${u.zones}</div><div class="text-muted small">Active Zones</div></div></div><div class="mt-2 text-center bg-light rounded py-1"><small class="text-muted" style="font-size:0.7rem">Last Active: ${u.lastActiveStr}</small></div></div>`; 
-      }); 
-      container.innerHTML = html; 
-  }
-  
-  function getProgColor(pct) { 
-      if (pct >= 100) return 'success'; 
-      if (pct >= 50) return 'warning'; 
-      return 'danger'; 
-  }
 </script>
 </body>
 </html>
