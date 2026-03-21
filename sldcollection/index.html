@@ -703,17 +703,129 @@
   }
 
   async function submitForm() {
-      const form = document.getElementById('mainForm'); if (!form.zone.value || !form.feeder.value) return alert("Select location.");
-      if(document.querySelector('.val-error')) return alert("Fix errors."); if(!payload.signoffBase64 || !payload.sldBase64) return alert("Images missing.");
-      const cReq = Number(document.getElementById('in-cableReq').value || 0); let tSum = 0;
-      if (cReq > 0) { document.querySelectorAll('.cable-dt-count').forEach(el => tSum += Number(el.value || 0)); if (tSum !== cReq) return alert("Sum error."); }
-      const sArr = [], cArr = [], cSum = [];
-      document.querySelectorAll('.kva-scope-in').forEach(i => { const v = Number(i.value || 0); if(v > 0) sArr.push({ k: i.name.replace('cap_', ''), v: v }); });
-      if (cReq > 0) { document.querySelectorAll('.cable-dt-count').forEach(i => { const c = Number(i.value || 0); if(c > 0) { const k = i.getAttribute('data-kva'), l = Number(document.querySelector(`.cable-len[data-kva="${k}"]`).value || 0); cArr.push({ k: k, c: c, s: CABLE_MAP[k], l: l }); cSum.push(`${k}KVA: ${c} (${l}m)`); } }); }
-      showLoader("Submitting...");
-      const res = await apiCall({ action: 'submit', uploaderName: document.getElementById('uploaderName').value, uploaderEmpCode: document.getElementById('activeEmpCode').value, zone: form.zone.value, circle: form.circle.value, division: form.division.value, subdiv: form.subdiv.value, substation: form.substation.value, feeder: form.feeder.value, totalScope: document.getElementById('out-totalScope').value, totalInstalled: document.getElementById('in-installed').value, balanceScope: document.getElementById('out-balanceScope').value, notInScope: document.getElementById('out-notInScope').value, cableReq: document.getElementById('in-cableReq').value, withoutCable: document.getElementById('in-withoutCable').value, ptwCount: document.getElementById('cap_ptw').value, scopeJSON: JSON.stringify(sArr), cableSummary: cSum.join(" | ") || "None", cableJSON: JSON.stringify(cArr), signoffBase64: payload.signoffBase64, sldBase64: payload.sldBase64 });
-      hideLoader(); if(res.status === 'success') { alert("Success!"); location.reload(); } else alert(res.message);
-  }
+    // 1. Helper to safely get values or return defaults
+    const getVal = (id) => {
+        const el = document.getElementById(id);
+        if (!el) {
+            console.warn(`Debug: Element with ID "${id}" not found.`);
+            return "";
+        }
+        return el.value;
+    };
+
+    const getNum = (id) => {
+        const val = getVal(id);
+        return Number(val) || 0;
+    };
+
+    // 2. Ensure loader shows
+    showLoader("Submitting...");
+
+    try {
+        const form = document.getElementById('mainForm');
+        if (!form) throw new Error("Main form element not found.");
+
+        // 3. Robust Location Validation (Defensive check for line 714 area)
+        const zone = getVal('sel-zone');
+        const circle = getVal('sel-circle');
+        const division = getVal('sel-div');
+        const subdiv = getVal('sel-subdiv');
+        const substation = getVal('sel-substn');
+        const feeder = getVal('sel-feeder');
+
+        if (!zone || !feeder) {
+            alert("Please select all location fields (Zone and Feeder are mandatory).");
+            hideLoader();
+            return;
+        }
+
+        // 4. Validation Checks
+        if (document.querySelector('.val-error')) {
+            alert("Please fix the highlighted errors before submitting.");
+            hideLoader();
+            return;
+        }
+
+        if (!payload.signoffBase64 || !payload.sldBase64) {
+            alert("Please upload both Sign-off Copy and SLD Drawing.");
+            hideLoader();
+            return;
+        }
+
+        // 5. Cable Table Validation
+        const cReq = getNum('in-cableReq');
+        let tSum = 0;
+        if (cReq > 0) {
+            document.querySelectorAll('.cable-dt-count').forEach(el => tSum += Number(el.value || 0));
+            if (tSum !== cReq) {
+                alert(`Cable table total (${tSum}) does not match Required DTs (${cReq}).`);
+                hideLoader();
+                return;
+            }
+        }
+
+        // 6. Data Construction with Fallbacks
+        const sArr = [];
+        document.querySelectorAll('.kva-scope-in').forEach(i => {
+            const v = Number(i.value || 0);
+            if (v > 0) sArr.push({ k: i.name.replace('cap_', ''), v: v });
+        });
+
+        const cArr = [];
+        const cSum = [];
+        if (cReq > 0) {
+            document.querySelectorAll('.cable-dt-count').forEach(i => {
+                const c = Number(i.value || 0);
+                if (c > 0) {
+                    const k = i.getAttribute('data-kva');
+                    const lenEl = document.querySelector(`.cable-len[data-kva="${k}"]`);
+                    const l = lenEl ? Number(lenEl.value || 0) : 0;
+                    cArr.push({ k: k, c: c, s: CABLE_MAP[k] || 0, l: l });
+                    cSum.push(`${k}KVA: ${c} (${l}m)`);
+                }
+            });
+        }
+
+        // 7. API Call
+        const response = await apiCall({
+            action: 'submit',
+            uploaderName: getVal('uploaderName'),
+            uploaderEmpCode: getVal('activeEmpCode'),
+            zone: zone,
+            circle: circle,
+            division: division,
+            subdiv: subdiv,
+            substation: substation,
+            feeder: feeder,
+            totalScope: getNum('out-totalScope'),
+            totalInstalled: getNum('in-installed'),
+            balanceScope: getNum('out-balanceScope'),
+            notInScope: getNum('out-notInScope'),
+            cableReq: cReq,
+            withoutCable: getNum('in-withoutCable'),
+            ptwCount: getNum('cap_ptw'),
+            scopeJSON: JSON.stringify(sArr),
+            cableSummary: cSum.join(" | ") || "None",
+            cableJSON: JSON.stringify(cArr),
+            signoffBase64: payload.signoffBase64,
+            sldBase64: payload.sldBase64
+        });
+
+        if (response.status === 'success') {
+            alert("Submission Successful!");
+            location.reload();
+        } else {
+            throw new Error(response.message || "Unknown Server Error");
+        }
+
+    } catch (error) {
+        console.error("Submission Error Details:", error);
+        alert("Submission Failed: " + error.message);
+    } finally {
+        // ALWAYS hide loader even if it crashes
+        hideLoader();
+    }
+}
 
   function fetchAdminData() { apiCall({ action: 'getUsersPaginated', adminCode: document.getElementById('activeEmpCode').value, page: adminState.page, limit: adminState.limit, search: adminState.search }).then(res => { if(res.status === 'success') { adminState.totalPages = res.data.totalPages; adminState.page = res.data.currentPage; updatePaginationUI(res.data.totalRecords); renderAdminTable(res.data.users); } }); }
   function toggleAdminZoneInput() { document.getElementById('n_zones_container').style.display = document.getElementById('n_role').value === 'QC' ? 'block' : 'none'; }
