@@ -116,6 +116,16 @@
       <div class="card-custom">
         <h6 class="section-title">📊 Scope & Status</h6>
         <div class="row g-3">
+          <div class="col-12 mb-2">
+            <label class="form-label text-primary fw-bold">Feeder Status <span class="text-danger">*</span></label>
+            <select name="feederStatus" id="in-feederStatus" class="form-select">
+                <option value="">Select Status...</option>
+                <option value="Completed">Completed</option>
+                <option value="MI Pending">MI Pending</option>
+            </select>
+          </div>
+          <div class="col-12"><hr class="my-1"></div>
+
           <div class="col-6"><label class="form-label text-muted">Total Scope</label><input type="number" class="form-control bg-light" id="out-totalScope" value="0" readonly></div>
           <div class="col-6"><label class="form-label text-muted">Not In Scope</label><input type="number" class="form-control bg-light" id="out-notInScope" value="0" readonly></div>
           <div class="col-6"><label class="form-label text-primary">Installed <span class="text-danger">*</span></label><input type="number" class="form-control" name="totalInstalled" id="in-installed" oninput="calculateScope()"></div>
@@ -218,6 +228,15 @@
           <div class="card-custom">
             <h6 class="section-title">📊 Scope & Status Correction</h6>
             <div class="row g-3">
+              <div class="col-12 mb-2">
+                  <label class="form-label text-primary fw-bold">Feeder Status <i class="bi bi-pencil-square"></i></label>
+                  <select id="qc-in-feederStatus" class="form-select border-primary">
+                      <option value="Completed">Completed</option>
+                      <option value="MI Pending">MI Pending</option>
+                  </select>
+              </div>
+              <div class="col-12"><hr class="my-1"></div>
+
               <div class="col-6"><label class="form-label text-muted">Total Scope</label><input type="number" class="form-control bg-light" id="qc-out-totalScope" readonly></div>
               <div class="col-6"><label class="form-label text-muted">Not In Scope</label><input type="number" class="form-control bg-light" id="qc-out-notInScope" readonly></div>
               
@@ -289,7 +308,8 @@
         <div><label>Mobile No</label><input type="number" id="n_mob" placeholder="10 Digits"></div>
         <div><label>Designation</label><input type="text" id="n_desig" placeholder="Role/Title"></div>
         <div><label>Role</label><select id="n_role" onchange="toggleAdminZoneInput()"><option value="User">User</option><option value="QC">QC</option><option value="Admin">Admin</option></select></div>
-        <div id="n_zones_container" style="display:none;"><label>QC Assigned Zones</label><select id="n_zones" multiple class="form-select" style="height:38px;"></select></div>
+        
+        <div id="n_zones_container" style="display:none;"><label>Assigned Zones (QC/User)</label><select id="n_zones" multiple class="form-select" style="height:38px;"></select></div>
         <div><button class="btn-small btn-admin-primary" style="width:100%; height:38px;" onclick="addNewUser()">Create User</button></div>
       </div>
       <div id="addMsg" class="mt-2 text-danger small fw-bold"></div>
@@ -304,7 +324,7 @@
     </div>
     <div class="admin-table-wrap">
       <table class="admin-table">
-        <thead><tr><th>Name / Designation</th><th>Emp Code</th><th>Role</th><th>QC Zones</th><th>Status</th><th>Action</th></tr></thead>
+        <thead><tr><th>Name / Designation</th><th>Emp Code</th><th>Role</th><th>Assigned Zones</th><th>Status</th><th>Action</th></tr></thead>
         <tbody id="adminTableBody"><tr><td colspan="6" style="text-align:center; padding: 20px;">Loading users...</td></tr></tbody>
       </table>
     </div>
@@ -451,7 +471,7 @@
   }
 
   // ==========================================
-  // GLOBAL DATA FETCH & QC ROLE RESTRICTION
+  // GLOBAL DATA FETCH & ZONE RESTRICTION
   // ==========================================
 
   async function loadAppData() { 
@@ -473,7 +493,8 @@
               uniqueGlobalZones.forEach(z => { if(z) nZones.innerHTML += `<option value="${z}">${z}</option>`; }); 
           }
 
-          if(userData && userData.role.toLowerCase() === 'qc' && userData.zones) {
+          // [+] NEW: ENFORCE ZONE FILTERING FOR BOTH QC AND USER ROLES
+          if(userData && (userData.role.toLowerCase() === 'qc' || userData.role.toLowerCase() === 'user') && userData.zones) {
               const allowed = userData.zones.split(',').map(z => z.trim().toLowerCase()).filter(z => z);
               if(allowed.length > 0) {
                   masterData = masterData.filter(r => allowed.includes(String(r[0]).trim().toLowerCase()));
@@ -567,22 +588,19 @@
       const d = document.getElementById('qc-filter-div').value;
       const sd = document.getElementById('qc-filter-subdiv').value;
 
-      // [+] NEW: Search and Date Ranges
       const searchTxt = (document.getElementById('qc-filter-search').value || '').toLowerCase().trim();
       const dateFromVal = document.getElementById('qc-filter-date-from').value;
       const dateToVal = document.getElementById('qc-filter-date-to').value;
 
       let dFrom = dateFromVal ? new Date(dateFromVal) : null;
-      if (dFrom) dFrom.setHours(0,0,0,0); // Start of day
+      if (dFrom) dFrom.setHours(0,0,0,0); 
       
       let dTo = dateToVal ? new Date(dateToVal) : null;
-      if (dTo) dTo.setHours(23,59,59,999); // End of day
+      if (dTo) dTo.setHours(23,59,59,999); 
 
       const filteredData = qcDataList.filter(r => {
-          // 1. Hierarchy Match
           const matchLoc = (!z || r.zone === z) && (!c || r.circle === c) && (!d || r.division === d) && (!sd || r.subdiv === sd);
           
-          // 2. Search Text Match (Feeder, Name, or Emp Code)
           let matchSearch = true;
           if (searchTxt) {
               const fStr = String(r.feeder || '').toLowerCase();
@@ -591,7 +609,6 @@
               matchSearch = fStr.includes(searchTxt) || nStr.includes(searchTxt) || cStr.includes(searchTxt);
           }
 
-          // 3. Date Range Match
           let matchDate = true;
           if (dFrom || dTo) {
               const rDate = new Date(r.date);
@@ -637,6 +654,10 @@
      document.getElementById('qc-oldSignUrl').value = record.signUrl;
      document.getElementById('qc-oldSldUrl').value = record.sldUrl;
      document.getElementById('qc-feederName').value = record.feeder;
+     
+     // [+] NEW: Prefill Feeder Status
+     document.getElementById('qc-in-feederStatus').value = record.feederStatus || 'Completed';
+
      qcPayload = { signoffBase64: null, sldBase64: null };
 
      document.getElementById('qc-location-details').innerHTML = `
@@ -727,13 +748,11 @@
     
     const tableSec = document.getElementById('qcCableDetailsSection'); 
     
-    // [+] BUG FIX: Clear hidden errors when Cable Req drops to 0
     if(cableReq > 0 && !cableInput.classList.contains('val-error')) { 
         tableSec.style.display = 'block'; 
         qcValidateTable(); 
     } else {
         tableSec.style.display = 'none';
-        // Erase any background validation errors so they do not block submission
         document.querySelectorAll('#qcCableDetailsSection .val-error').forEach(el => el.classList.remove('val-error'));
         const errDiv = document.getElementById('qc-tbl-error-msg');
         if(errDiv) errDiv.innerText = "";
@@ -787,7 +806,6 @@
       const globalReq = Number(document.getElementById('qc-in-cableReq').value || 0); 
       let tableSum = 0; 
       
-      // [+] BUG FIX: Only test the table sum if Cable Req > 0
       if (globalReq > 0) {
           document.querySelectorAll('.qc-cable-dt-count').forEach(el => tableSum += Number(el.value || 0));
           if (tableSum !== globalReq) return alert(`Validation Error:\nTable Total (${tableSum}) must match Cable Req (${globalReq}).`);
@@ -802,7 +820,6 @@
       const cableDetailsArray = []; 
       const cableSummaryArray = []; 
       
-      // [+] BUG FIX: Only pull cable JSON data if Cable Req > 0
       if (globalReq > 0) {
           document.querySelectorAll('.qc-cable-dt-count').forEach(input => { 
               const count = Number(input.value || 0); 
@@ -823,6 +840,7 @@
           feeder: document.getElementById('qc-feederName').value, 
           oldSignUrl: document.getElementById('qc-oldSignUrl').value, 
           oldSldUrl: document.getElementById('qc-oldSldUrl').value,
+          feederStatus: document.getElementById('qc-in-feederStatus').value, // [+] NEW
           totalScope: document.getElementById('qc-out-totalScope').value, 
           totalInstalled: document.getElementById('qc-in-installed').value, 
           balanceScope: document.getElementById('qc-out-balanceScope').value, 
@@ -915,7 +933,6 @@
       
       const tableSec = document.getElementById('cableDetailsSection'); 
       
-      // [+] BUG FIX APPLIED HERE AS WELL
       if(cableReq > 0 && !cableInput.classList.contains('val-error')) { 
           tableSec.style.display = 'block'; validateTable(); 
       } else {
@@ -968,6 +985,10 @@
   async function submitForm() { 
       const form = document.getElementById('mainForm'); 
       if (!form.zone.value || !form.circle.value || !form.division.value || !form.subdiv.value || !form.substation.value || !form.feeder.value) return alert("Validation Error: Please select all Location Details."); 
+      
+      // [+] NEW: Validate Feeder Status Input
+      if (!document.getElementById('in-feederStatus').value) return alert("Validation Error: Please select a Feeder Status.");
+
       if(document.querySelector('.val-error')) return alert("Please fix validation errors."); 
       if(!payload.signoffBase64 || !payload.sldBase64) return alert("Please upload both images."); 
       
@@ -1002,6 +1023,7 @@
       const data = { 
           action: 'submit', uploaderName: document.getElementById('uploaderName').value, uploaderEmpCode: document.getElementById('activeEmpCode').value, 
           zone: form.zone.value, circle: form.circle.value, division: form.division.value, subdiv: form.subdiv.value, substation: form.substation.value, feeder: form.feeder.value, 
+          feederStatus: document.getElementById('in-feederStatus').value, // [+] NEW
           totalScope: document.getElementById('out-totalScope').value, totalInstalled: document.getElementById('in-installed').value, balanceScope: document.getElementById('out-balanceScope').value, 
           notInScope: document.getElementById('out-notInScope').value, cableReq: document.getElementById('in-cableReq').value, withoutCable: document.getElementById('in-withoutCable').value, ptwCount: document.getElementById('cap_ptw').value, 
           scopeJSON: scopeArray.length > 0 ? JSON.stringify(scopeArray) : "[]", cableSummary: cableSummaryArray.length > 0 ? cableSummaryArray.join(" | ") : "None", cableJSON: cableDetailsArray.length > 0 ? JSON.stringify(cableDetailsArray) : "[]", 
@@ -1039,7 +1061,7 @@
   
   function toggleAdminZoneInput() { 
       const r = document.getElementById('n_role').value; 
-      document.getElementById('n_zones_container').style.display = r === 'QC' ? 'block' : 'none'; 
+      document.getElementById('n_zones_container').style.display = (r === 'QC' || r === 'User') ? 'block' : 'none'; 
   }
   
   function renderAdminTable(users) { 
@@ -1052,8 +1074,8 @@
       users.forEach(u => { 
           const isActive = u.status.toLowerCase() === 'active'; 
           const statusClass = isActive ? 'st-active' : 'st-inactive'; 
-          const isQC = u.role.toLowerCase() === 'qc';
-          const zoneHtml = isQC ? `<div style="font-size:11px; max-width:120px;" class="text-truncate text-muted" title="${u.zones}">${u.zones||'All'}</div><button class="btn btn-link btn-sm p-0 fw-bold" onclick="editUserZones('${u.empCode}', '${u.zones}')">Edit</button>` : '-';
+          const isRestricted = (u.role.toLowerCase() === 'qc' || u.role.toLowerCase() === 'user');
+          const zoneHtml = isRestricted ? `<div style="font-size:11px; max-width:120px;" class="text-truncate text-muted" title="${u.zones}">${u.zones||'All'}</div><button class="btn btn-link btn-sm p-0 fw-bold" onclick="editUserZones('${u.empCode}', '${u.zones}')">Edit</button>` : '-';
           
           const tr = document.createElement('tr'); 
           tr.innerHTML = `<td style="font-weight:600;">${u.name}<br><span style="font-weight:normal;color:#666;font-size:11px;">${u.designation}</span></td><td style="font-family:monospace;">${u.empCode}</td><td><select class="form-select form-select-sm" onchange="changeUserRole('${u.empCode}', this.value)"><option value="Admin" ${u.role.toLowerCase()==='admin'?'selected':''}>Admin</option><option value="QC" ${u.role.toLowerCase()==='qc'?'selected':''}>QC</option><option value="User" ${u.role.toLowerCase()==='user'?'selected':''}>User</option></select></td><td>${zoneHtml}</td><td><button class="toggle-status ${statusClass}" onclick="toggleUserStatus('${u.empCode}', '${u.status}', this)">${u.status}</button></td><td><button class="btn-small btn-reset" onclick="resetUserPass('${u.empCode}', '${u.name}')">Reset</button></td>`; 
