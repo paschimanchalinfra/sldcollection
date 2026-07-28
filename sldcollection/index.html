@@ -269,6 +269,11 @@
                     </table>
                 </div>
                 <div id="qc-tbl-error-msg" class="val-msg text-center mt-2"></div>
+                <div class="text-center">
+                  <a class="show-more-btn text-primary" onclick="toggleHighCapacity()">
+                      <i class="bi bi-chevron-down"></i> Show more rating
+                  </a>
+                </div>
             </div>
           </div>
 
@@ -672,7 +677,13 @@
           tbody.innerHTML += `<tr class="bg-white ${isHidden}"><td class="fw-bold">${k}</td><td><input type="number" class="cable-dt-count" data-kva="${k}" oninput="validateTable()"></td><td><input type="number" class="cable-dt-mirror" id="mirror-${k}" readonly style="background:#eee;"></td><td><input type="text" value="${CABLE_MAP[k]}" readonly style="border:none; background:transparent; width:100%; text-align:center;"></td><td><input type="number" class="cable-len" data-kva="${k}" oninput="validateTable()"></td><td class="fw-bold small cable-avg" id="avg-${k}">0</td></tr>`; 
       }); 
   }
-  function toggleHighCapacity() { document.querySelectorAll('.high-cap').forEach(el => el.classList.toggle('hidden-row')); const btn = document.querySelector('.show-more-btn'); btn.innerHTML = btn.innerHTML.includes('Show') ? '<i class="bi bi-chevron-up"></i> Less' : '<i class="bi bi-chevron-down"></i> More'; }
+  
+  function toggleHighCapacity() { 
+      document.querySelectorAll('.high-cap').forEach(el => el.classList.toggle('hidden-row')); 
+      document.querySelectorAll('.show-more-btn').forEach(btn => {
+          btn.innerHTML = btn.innerHTML.includes('Show') ? '<i class="bi bi-chevron-up"></i> Less' : '<i class="bi bi-chevron-down"></i> More'; 
+      });
+  }
 
   function calculateScope() {
       let sum = 0; document.querySelectorAll('.kva-scope-in').forEach(el => sum += Number(el.value || 0));
